@@ -1,0 +1,27 @@
+{
+  "manifest_version": 2,
+  "name": "My Simple Sidebar",
+  "version": "1.0",
+  "description": "A basic sidebar extension for Firefox.",
+  "icons": {
+    "48": "icons/icon-48.png"
+  },
+  "sidebar_action": {
+    "default_icon": "icon/48.png",
+    "default_title": "My Sidebar",
+    "default_panel": "sidebar.html",
+    "open_at_install": true
+  },
+  "background": {
+    "scripts": ["background.js"]
+  },
+  "content_security_policy": "script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval'; object-src 'self';",
+  "commands": {
+    "_execute_sidebar_action": {
+      "suggested_key": {
+        "default": "Ctrl+E"
+      },
+      "description": "Toggle SmritiAI Sidebar"
+    }
+  }
+}

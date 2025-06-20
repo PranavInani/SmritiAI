@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <link rel="stylesheet" href="sidebar.css"/>
+  </head>
+  <body>
+    <!-- This will be shown during the initial model download -->
+    <div id="loading-container" class="hidden">
+        <div id="loading-text">Preparing AI model for first use...</div>
+        <div id="progress-bar-container">
+            <div id="progress-bar"></div>
+        </div>
+        <div id="progress-text">0%</div>
+    </div>
+
+    <!-- The main chat interface -->
+    <div id="chat-container">
+      <header id="sidebar-header">
+        <h1>SmritiAI</h1>
+        <button id="theme-toggle-btn" title="Toggle Theme">🌙</button>
+      </header>
+      <div id="chat-messages">
+        <div class="message received">Hello, What can I help you with?</div>
+      </div>
+      <form id="chat-form">
+        <input type="text" id="message-input" placeholder="Type a message..." autocomplete="off">
+        <button type="submit">Send</button>
+      </form>
+    </div>
+    <script src="sidebar.js" type = "module"></script>
+  </body>
+</html>
