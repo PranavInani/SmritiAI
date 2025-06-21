@@ -1,4 +1,6 @@
 import { pipeline, env } from '@xenova/transformers';
+// Import both 'db' and 'addOrUpdatePage' from your db file
+import { addOrUpdatePage } from './db';
 
 
 env.allowLocalModels = false; // Ensure we use the remote -> cache flow
@@ -23,21 +25,32 @@ class EmbeddingPipelineSingleton {
     }
 }
 
-// Listen for tab updates to inject the content script
-browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    // Check if the tab is fully loaded and has a web URL
-    if (changeInfo.status === 'complete' && tab.url && tab.url.startsWith('http')) {
-        browser.tabs.executeScript(tabId, { file: "/content.js" })
-            .catch(err => console.error("Error injecting script:", err));
-    }
-});
-
 // Listen for messages from other parts of the extension
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'processPageData') {
-        console.log("Received clean data from content script:", message.data);
-        // TODO: Convert to embedding and save to DB
-        return; // Not expecting a response
+        (async () => {
+            try {
+                console.log(`1. Received content for: ${message.data.title}`);
+                
+                const extractor = await EmbeddingPipelineSingleton.getInstance();
+                
+                console.log('2. Generating embedding...');
+                const embedding = await extractor(message.data.content, { pooling: 'mean', normalize: true });
+                console.log('3. Embedding generated successfully.');
+
+                // 4. Save to DB, but no longer pass the textContent.
+                await addOrUpdatePage({
+                    url: message.data.url,
+                    title: message.data.title,
+                    // textContent property is now removed from the object being saved.
+                    embedding: embedding.data,
+                });
+
+            } catch (error) {
+                console.error('Failed to process page data:', error);
+            }
+        })();
+        return; // No response needed for this action
     }
 
     if (message.type === 'get-embedding') {
