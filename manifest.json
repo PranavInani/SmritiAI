@@ -1,11 +1,17 @@
 {
   "manifest_version": 2,
-  "name": "My Simple Sidebar",
+  "name": "SmritiAI",
   "version": "1.0",
-  "description": "A basic sidebar extension for Firefox.",
+  "description": "Search Your Browser History with AI",
   "icons": {
     "48": "icons/icon-48.png"
   },
+  "permissions": [
+    "history",
+    "storage",
+    "tabs",
+    "<all_urls>"
+  ],
   "sidebar_action": {
     "default_icon": "icon/48.png",
     "default_title": "My Sidebar",
@@ -13,8 +19,19 @@
     "open_at_install": true
   },
   "background": {
-    "scripts": ["background.js"]
+    "scripts": ["background.js"],
+    "persistent": true
   },
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ]
+    }
+  ],
   "content_security_policy": "script-src 'self' 'wasm-unsafe-eval' 'unsafe-eval'; object-src 'self';",
   "commands": {
     "_execute_sidebar_action": {

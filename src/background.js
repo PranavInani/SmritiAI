@@ -1,7 +1,6 @@
 import { pipeline, env } from '@xenova/transformers';
 
-// For stability in the extension environment.
-env.backends.onnx.wasm.numThreads = 1;
+
 env.allowLocalModels = false; // Ensure we use the remote -> cache flow
 
 /**
@@ -24,8 +23,23 @@ class EmbeddingPipelineSingleton {
     }
 }
 
-// Listen for messages from the sidebar
+// Listen for tab updates to inject the content script
+browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+    // Check if the tab is fully loaded and has a web URL
+    if (changeInfo.status === 'complete' && tab.url && tab.url.startsWith('http')) {
+        browser.tabs.executeScript(tabId, { file: "/content.js" })
+            .catch(err => console.error("Error injecting script:", err));
+    }
+});
+
+// Listen for messages from other parts of the extension
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    if (message.action === 'processPageData') {
+        console.log("Received clean data from content script:", message.data);
+        // TODO: Convert to embedding and save to DB
+        return; // Not expecting a response
+    }
+
     if (message.type === 'get-embedding') {
         // Run the pipeline asynchronously
         (async () => {
