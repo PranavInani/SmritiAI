@@ -16,11 +16,11 @@ body.dark-mode {
   --text-color: #e1e1e1;
   --header-border-color: #3a3a3c;
   --msg-received-bg: #2c2c2e;
-  --msg-sent-bg: #3e5975; /* Changed to a darker blue */
+  --msg-sent-bg: #4a73a8; /* Made brighter blue for dark mode */
   --msg-sent-text: white;
   --form-bg: #121212;
   --input-border-color: #3a3a3c;
-  --button-bg: #3e5975; /* Changed to a darker blue */
+  --button-bg: #5a8bc4; /* Made brighter blue for dark mode */
   --button-text: white;
 }
 
@@ -320,4 +320,181 @@ body.dark-mode .dropdown-menu {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* Modal Styles */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 2000;
+}
+
+.modal-content {
+  background-color: var(--bg-color);
+  border-radius: 12px;
+  width: 90%;
+  max-width: 500px;
+  max-height: 80vh;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--header-border-color);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid var(--header-border-color);
+  background-color: var(--form-bg);
+}
+
+.modal-header h2 {
+  margin: 0;
+  font-size: 1.3em;
+  color: var(--text-color);
+}
+
+.close-button {
+  background: none;
+  border: none;
+  font-size: 1.5em;
+  cursor: pointer;
+  color: var(--text-color);
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+}
+
+.close-button:hover {
+  background-color: var(--msg-received-bg);
+}
+
+.modal-body {
+  padding: 20px;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.modal-footer {
+  padding: 20px;
+  border-top: 1px solid var(--header-border-color);
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+  background-color: var(--form-bg);
+}
+
+/* Settings Styles */
+.settings-section {
+  margin-bottom: 25px;
+}
+
+.settings-section h3 {
+  margin: 0 0 15px 0;
+  font-size: 1.1em;
+  color: var(--button-bg);
+  border-bottom: 1px solid var(--header-border-color);
+  padding-bottom: 5px;
+}
+
+.setting-item {
+  margin-bottom: 15px;
+}
+
+.setting-item label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 500;
+  color: var(--text-color);
+}
+
+.setting-item input[type="number"],
+.setting-item input[type="text"] {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--input-border-color);
+  border-radius: 6px;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-size: 0.9em;
+}
+
+.setting-item input[type="checkbox"] {
+  margin-right: 8px;
+}
+
+.setting-help {
+  display: block;
+  font-size: 0.8em;
+  color: var(--text-color);
+  opacity: 0.7;
+  margin-top: 3px;
+}
+
+/* Button Styles */
+.btn-primary,
+.btn-secondary,
+.btn-danger {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 0.9em;
+  transition: background-color 0.2s ease;
+}
+
+.btn-primary {
+  background-color: var(--button-bg);
+  color: var(--button-text);
+}
+
+.btn-primary:hover {
+  background-color: var(--msg-sent-bg);
+}
+
+.btn-secondary {
+  background-color: var(--msg-received-bg);
+  color: var(--text-color);
+}
+
+.btn-secondary:hover {
+  opacity: 0.8;
+}
+
+.btn-danger {
+  background-color: #dc3545;
+  color: white;
+}
+
+.btn-danger:hover {
+  background-color: #c82333;
+}
+
+/* Progress and status styles */
+.progress-text {
+  font-size: 0.8em;
+  color: var(--button-bg);
+  font-style: italic;
+}
+
+.success-text {
+  color: #28a745;
+}
+
+.error-text {
+  color: #dc3545;
 }

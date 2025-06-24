@@ -1,6 +1,6 @@
 import { pipeline, env } from '@xenova/transformers';
 import { db, addOrUpdatePage } from './db';
-import { initSearchIndex, searchPages, addPageToIndex, manualRebuildIndex, getIndexStats } from './search';
+import { initSearchIndex, searchPages, addPageToIndex, manualRebuildIndex, getIndexStats, updateSearchSettings, exportAllData, importData, clearAllData, getSearchSettings } from './search';
 
 // Expose the db instance to the global scope for easy debugging from the console
 globalThis.db = db;
@@ -97,7 +97,9 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             console.log(`Query embedding generated, length: ${queryEmbedding.data.length}`);
 
             // 2. Use our search function to find the top results
-            const results = await searchPages(queryEmbedding.data, 5);
+            const settings = getSearchSettings();
+            const resultCount = settings?.searchResultCount || 5;
+            const results = await searchPages(queryEmbedding.data, resultCount);
             
             console.log(`Search results found: ${results.length} pages`);
             console.log("Search results:", results);
@@ -142,5 +144,77 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             }
         })();
         return true; // Indicate an async response
+    }
+
+    // Handler for updating settings
+    if (message.action === 'update-settings') {
+        (async () => {
+            try {
+                console.log('Settings update requested from UI...');
+                
+                await updateSearchSettings(message.settings);
+                
+                console.log('Settings updated successfully.');
+                sendResponse({ success: true });
+            } catch (error) {
+                console.error('Failed to update settings:', error);
+                sendResponse({ success: false, error: error.message });
+            }
+        })();
+        return true;
+    }
+
+    // Handler for exporting data
+    if (message.action === 'export-data') {
+        (async () => {
+            try {
+                console.log('Data export requested from UI...');
+                
+                const data = await exportAllData();
+                
+                console.log('Data exported successfully.');
+                sendResponse({ success: true, data });
+            } catch (error) {
+                console.error('Failed to export data:', error);
+                sendResponse({ success: false, error: error.message });
+            }
+        })();
+        return true;
+    }
+
+    // Handler for importing data
+    if (message.action === 'import-data') {
+        (async () => {
+            try {
+                console.log('Data import requested from UI...');
+                
+                const result = await importData(message.data);
+                
+                console.log('Data imported successfully.');
+                sendResponse({ success: true, imported: result.imported });
+            } catch (error) {
+                console.error('Failed to import data:', error);
+                sendResponse({ success: false, error: error.message });
+            }
+        })();
+        return true;
+    }
+
+    // Handler for clearing all data
+    if (message.action === 'clear-all-data') {
+        (async () => {
+            try {
+                console.log('Clear all data requested from UI...');
+                
+                await clearAllData();
+                
+                console.log('All data cleared successfully.');
+                sendResponse({ success: true });
+            } catch (error) {
+                console.error('Failed to clear all data:', error);
+                sendResponse({ success: false, error: error.message });
+            }
+        })();
+        return true;
     }
 });

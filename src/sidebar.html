@@ -30,6 +30,22 @@
                 <span class="dropdown-item-text">Index Stats</span>
                 <span class="dropdown-item-status" id="stats-status"></span>
               </div>
+              <div class="dropdown-item" data-action="settings">
+                <span class="dropdown-item-text">Settings</span>
+                <span class="dropdown-item-status" id="settings-status"></span>
+              </div>
+              <div class="dropdown-item" data-action="export-data">
+                <span class="dropdown-item-text">Export Data</span>
+                <span class="dropdown-item-status" id="export-status"></span>
+              </div>
+              <div class="dropdown-item" data-action="import-data">
+                <span class="dropdown-item-text">Import Data</span>
+                <span class="dropdown-item-status" id="import-status"></span>
+              </div>
+              <div class="dropdown-item" data-action="clear-data">
+                <span class="dropdown-item-text">Clear All Data</span>
+                <span class="dropdown-item-status" id="clear-status"></span>
+              </div>
             </div>
           </div>
         </div>
@@ -43,6 +59,81 @@
         <button type="submit">Send</button>
       </form>
     </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Settings</h2>
+          <button id="close-settings" class="close-button">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="settings-section">
+            <h3>Search Settings</h3>
+            <div class="setting-item">
+              <label for="search-result-count">Number of search results (k):</label>
+              <input type="number" id="search-result-count" min="1" max="20" value="5">
+              <span class="setting-help">How many pages to return per search</span>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h3>HNSW Parameters</h3>
+            <div class="setting-item">
+              <label for="hnsw-ef">ef (search quality):</label>
+              <input type="number" id="hnsw-ef" min="10" max="1000" value="200">
+              <span class="setting-help">Higher values = better accuracy, slower search</span>
+            </div>
+            <div class="setting-item">
+              <label for="hnsw-m">M (connections):</label>
+              <input type="number" id="hnsw-m" min="4" max="64" value="16">
+              <span class="setting-help">Higher values = better accuracy, more memory</span>
+            </div>
+            <div class="setting-item">
+              <label for="max-elements">Max elements:</label>
+              <input type="number" id="max-elements" min="1000" max="100000" value="10000">
+              <span class="setting-help">Maximum pages that can be indexed</span>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h3>Indexing Options</h3>
+            <div class="setting-item">
+              <label>
+                <input type="checkbox" id="auto-index">
+                Auto-index new pages
+              </label>
+              <span class="setting-help">Automatically add new pages to search index</span>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="save-settings" class="btn-primary">Save Settings</button>
+          <button id="reset-settings" class="btn-secondary">Reset to Defaults</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmation-modal" class="modal hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2 id="confirm-title">Confirm Action</h2>
+          <button id="close-confirm" class="close-button">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p id="confirm-message">Are you sure you want to proceed?</p>
+        </div>
+        <div class="modal-footer">
+          <button id="confirm-yes" class="btn-danger">Yes</button>
+          <button id="confirm-no" class="btn-secondary">Cancel</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Hidden file input for import -->
+    <input type="file" id="import-file-input" accept=".json" style="display: none;">
+
     <script src="sidebar.js" type = "module"></script>
   </body>
 </html>

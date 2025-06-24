@@ -7,12 +7,18 @@ let hnswLib = null;
 let isIndexInitialized = false;
 
 // Configuration for HNSW
-const HNSW_CONFIG = {
+let HNSW_CONFIG = {
   dimension: 384, // all-MiniLM-L6-v2 embedding dimension
   maxElements: 10000, // Maximum number of pages we can index
   ef: 200, // ef parameter for search quality
   M: 16, // M parameter for construction
   metric: 'cosine' // Use cosine distance for semantic similarity
+};
+
+// Search settings
+let searchSettings = {
+  searchResultCount: 5,
+  autoIndex: true
 };
 
 /**
@@ -195,6 +201,142 @@ export async function addPageToIndex(pageData) {
  */
 export async function manualRebuildIndex() {
   return await initSearchIndex();
+}
+
+/**
+ * Updates search settings and applies them.
+ */
+export async function updateSearchSettings(newSettings) {
+  try {
+    // Update HNSW configuration
+    if (newSettings.hnswEf) HNSW_CONFIG.ef = newSettings.hnswEf;
+    if (newSettings.hnswM) HNSW_CONFIG.M = newSettings.hnswM;
+    if (newSettings.maxElements) HNSW_CONFIG.maxElements = newSettings.maxElements;
+    
+    // Update search settings
+    if (newSettings.searchResultCount) searchSettings.searchResultCount = newSettings.searchResultCount;
+    if (typeof newSettings.autoIndex === 'boolean') searchSettings.autoIndex = newSettings.autoIndex;
+    
+    console.log('Search settings updated:', { HNSW_CONFIG, searchSettings });
+    
+    // Note: HNSW parameters only take effect after a rebuild
+    return true;
+  } catch (error) {
+    console.error('Error updating search settings:', error);
+    throw error;
+  }
+}
+
+/**
+ * Gets current search settings.
+ */
+export function getSearchSettings() {
+  return searchSettings;
+}
+
+/**
+ * Exports all data from the database.
+ */
+export async function exportAllData() {
+  try {
+    const pages = await db.pages.toArray();
+    
+    const exportData = {
+      version: '1.0',
+      exportDate: new Date().toISOString(),
+      settings: {
+        ...HNSW_CONFIG,
+        ...searchSettings
+      },
+      pages: pages.map(page => ({
+        id: page.id,
+        url: page.url,
+        title: page.title,
+        timestamp: page.timestamp,
+        embedding: Array.from(page.embedding) // Convert Float32Array to regular array
+      }))
+    };
+    
+    console.log(`Exported ${pages.length} pages`);
+    return exportData;
+  } catch (error) {
+    console.error('Error exporting data:', error);
+    throw error;
+  }
+}
+
+/**
+ * Imports data into the database.
+ */
+export async function importData(importData) {
+  try {
+    if (!importData.pages || !Array.isArray(importData.pages)) {
+      throw new Error('Invalid import data format');
+    }
+    
+    let imported = 0;
+    let skipped = 0;
+    
+    for (const pageData of importData.pages) {
+      try {
+        // Convert array back to Float32Array
+        const embedding = new Float32Array(pageData.embedding);
+        
+        // Check if page already exists
+        const existing = await db.pages.where('url').equals(pageData.url).first();
+        
+        if (!existing) {
+          await db.pages.add({
+            url: pageData.url,
+            title: pageData.title,
+            timestamp: pageData.timestamp || new Date().toISOString(),
+            embedding: embedding
+          });
+          imported++;
+        } else {
+          skipped++;
+        }
+      } catch (error) {
+        console.warn('Failed to import page:', pageData.url, error);
+        skipped++;
+      }
+    }
+    
+    console.log(`Import completed: ${imported} imported, ${skipped} skipped`);
+    
+    // Trigger a rebuild if we imported data
+    if (imported > 0) {
+      await manualRebuildIndex();
+    }
+    
+    return { imported, skipped };
+  } catch (error) {
+    console.error('Error importing data:', error);
+    throw error;
+  }
+}
+
+/**
+ * Clears all data from the database and resets the index.
+ */
+export async function clearAllData() {
+  try {
+    // Clear the database
+    await db.pages.clear();
+    
+    // Reset the HNSW index
+    if (hnswIndex && hnswLib) {
+      hnswIndex = new hnswLib.HierarchicalNSW(HNSW_CONFIG.metric, HNSW_CONFIG.dimension, '');
+      hnswIndex.initIndex(HNSW_CONFIG.maxElements, HNSW_CONFIG.M, HNSW_CONFIG.ef, 100);
+      isIndexInitialized = true;
+    }
+    
+    console.log('All data cleared successfully');
+    return true;
+  } catch (error) {
+    console.error('Error clearing all data:', error);
+    throw error;
+  }
 }
 
 /**

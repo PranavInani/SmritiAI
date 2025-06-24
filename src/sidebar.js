@@ -17,6 +17,31 @@ document.addEventListener('DOMContentLoaded', () => {
   const dropdownMenu = document.getElementById('dropdown-menu');
   const rebuildStatus = document.getElementById('rebuild-status');
 
+  // --- Modal Elements ---
+  const settingsModal = document.getElementById('settings-modal');
+  const confirmationModal = document.getElementById('confirmation-modal');
+  const closeSettings = document.getElementById('close-settings');
+  const closeConfirm = document.getElementById('close-confirm');
+  const saveSettings = document.getElementById('save-settings');
+  const resetSettings = document.getElementById('reset-settings');
+  const confirmYes = document.getElementById('confirm-yes');
+  const confirmNo = document.getElementById('confirm-no');
+  const confirmTitle = document.getElementById('confirm-title');
+  const confirmMessage = document.getElementById('confirm-message');
+  const importFileInput = document.getElementById('import-file-input');
+
+  // Settings values
+  let currentSettings = {
+    searchResultCount: 5,
+    hnswEf: 200,
+    hnswM: 16,
+    maxElements: 10000,
+    autoIndex: true
+  };
+
+  // Load settings on startup
+  loadSettings();
+
   // --- Model Progress Listener ---
   browser.runtime.onMessage.addListener((message) => {
     if (message.type === 'model-progress') {
@@ -175,6 +200,14 @@ document.addEventListener('DOMContentLoaded', () => {
       await handleRebuildIndex();
     } else if (action === 'index-stats') {
       await handleIndexStats();
+    } else if (action === 'settings') {
+      openSettingsModal();
+    } else if (action === 'export-data') {
+      await handleExportData();
+    } else if (action === 'import-data') {
+      handleImportData();
+    } else if (action === 'clear-data') {
+      handleClearData();
     }
     
     // Future actions can be added here
@@ -268,4 +301,220 @@ document.addEventListener('DOMContentLoaded', () => {
     chatMessages.appendChild(statsMessage);
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
+
+  // --- Settings Management ---
+  function loadSettings() {
+    const saved = localStorage.getItem('smriti-settings');
+    if (saved) {
+      currentSettings = { ...currentSettings, ...JSON.parse(saved) };
+    }
+    updateSettingsUI();
+  }
+
+  function saveSettingsToStorage() {
+    localStorage.setItem('smriti-settings', JSON.stringify(currentSettings));
+  }
+
+  function updateSettingsUI() {
+    document.getElementById('search-result-count').value = currentSettings.searchResultCount;
+    document.getElementById('hnsw-ef').value = currentSettings.hnswEf;
+    document.getElementById('hnsw-m').value = currentSettings.hnswM;
+    document.getElementById('max-elements').value = currentSettings.maxElements;
+    document.getElementById('auto-index').checked = currentSettings.autoIndex;
+  }
+
+  function openSettingsModal() {
+    updateSettingsUI();
+    settingsModal.classList.remove('hidden');
+  }
+
+  function closeSettingsModal() {
+    settingsModal.classList.add('hidden');
+  }
+
+  // --- Export Data Handler ---
+  async function handleExportData() {
+    try {
+      const exportStatus = document.getElementById('export-status');
+      exportStatus.innerHTML = '<span class="spinner"></span>';
+
+      const response = await browser.runtime.sendMessage({
+        action: 'export-data'
+      });
+
+      if (response && response.success) {
+        // Create and download the file
+        const dataStr = JSON.stringify(response.data, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `smriti-ai-backup-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        exportStatus.innerHTML = '<span class="success-text">✓</span>';
+        setTimeout(() => exportStatus.textContent = '', 2000);
+      } else {
+        exportStatus.innerHTML = '<span class="error-text">✗</span>';
+        setTimeout(() => exportStatus.textContent = '', 3000);
+      }
+    } catch (error) {
+      console.error('Error exporting data:', error);
+      document.getElementById('export-status').innerHTML = '<span class="error-text">✗</span>';
+      setTimeout(() => document.getElementById('export-status').textContent = '', 3000);
+    }
+  }
+
+  // --- Import Data Handler ---
+  function handleImportData() {
+    importFileInput.click();
+  }
+
+  // --- Clear Data Handler ---
+  function handleClearData() {
+    showConfirmation(
+      'Clear All Data',
+      'This will permanently delete all saved pages, embeddings, and search index. This action cannot be undone. Are you sure?',
+      async () => {
+        try {
+          const clearStatus = document.getElementById('clear-status');
+          clearStatus.innerHTML = '<span class="spinner"></span>';
+
+          const response = await browser.runtime.sendMessage({
+            action: 'clear-all-data'
+          });
+
+          if (response && response.success) {
+            clearStatus.innerHTML = '<span class="success-text">✓</span>';
+            appendMessage('All data has been cleared successfully.', 'received');
+            setTimeout(() => clearStatus.textContent = '', 2000);
+          } else {
+            clearStatus.innerHTML = '<span class="error-text">✗</span>';
+            setTimeout(() => clearStatus.textContent = '', 3000);
+          }
+        } catch (error) {
+          console.error('Error clearing data:', error);
+          document.getElementById('clear-status').innerHTML = '<span class="error-text">✗</span>';
+          setTimeout(() => document.getElementById('clear-status').textContent = '', 3000);
+        }
+      }
+    );
+  }
+
+  // --- Confirmation Modal ---
+  function showConfirmation(title, message, onConfirm) {
+    confirmTitle.textContent = title;
+    confirmMessage.textContent = message;
+    confirmationModal.classList.remove('hidden');
+    
+    // Remove any existing listeners
+    const newConfirmYes = confirmYes.cloneNode(true);
+    confirmYes.parentNode.replaceChild(newConfirmYes, confirmYes);
+    
+    newConfirmYes.addEventListener('click', () => {
+      confirmationModal.classList.add('hidden');
+      onConfirm();
+    });
+  }
+
+  // --- Event Listeners ---
+  
+  // Settings modal
+  closeSettings.addEventListener('click', closeSettingsModal);
+  
+  saveSettings.addEventListener('click', () => {
+    // Get values from form
+    currentSettings.searchResultCount = parseInt(document.getElementById('search-result-count').value);
+    currentSettings.hnswEf = parseInt(document.getElementById('hnsw-ef').value);
+    currentSettings.hnswM = parseInt(document.getElementById('hnsw-m').value);
+    currentSettings.maxElements = parseInt(document.getElementById('max-elements').value);
+    currentSettings.autoIndex = document.getElementById('auto-index').checked;
+    
+    saveSettingsToStorage();
+    
+    // Send updated settings to background script
+    browser.runtime.sendMessage({
+      action: 'update-settings',
+      settings: currentSettings
+    });
+    
+    closeSettingsModal();
+    appendMessage('Settings saved successfully!', 'received');
+  });
+
+  resetSettings.addEventListener('click', () => {
+    showConfirmation(
+      'Reset Settings',
+      'This will reset all settings to their default values. Continue?',
+      () => {
+        currentSettings = {
+          searchResultCount: 5,
+          hnswEf: 200,
+          hnswM: 16,
+          maxElements: 10000,
+          autoIndex: true
+        };
+        saveSettingsToStorage();
+        updateSettingsUI();
+        appendMessage('Settings reset to defaults.', 'received');
+      }
+    );
+  });
+
+  // Confirmation modal
+  closeConfirm.addEventListener('click', () => {
+    confirmationModal.classList.add('hidden');
+  });
+
+  confirmNo.addEventListener('click', () => {
+    confirmationModal.classList.add('hidden');
+  });
+
+  // Import file handler
+  importFileInput.addEventListener('change', async (event) => {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    try {
+      const importStatus = document.getElementById('import-status');
+      importStatus.innerHTML = '<span class="spinner"></span>';
+
+      const text = await file.text();
+      const data = JSON.parse(text);
+
+      const response = await browser.runtime.sendMessage({
+        action: 'import-data',
+        data: data
+      });
+
+      if (response && response.success) {
+        importStatus.innerHTML = '<span class="success-text">✓</span>';
+        appendMessage(`Successfully imported ${response.imported} pages!`, 'received');
+        setTimeout(() => importStatus.textContent = '', 2000);
+      } else {
+        importStatus.innerHTML = '<span class="error-text">✗</span>';
+        setTimeout(() => importStatus.textContent = '', 3000);
+      }
+    } catch (error) {
+      console.error('Error importing data:', error);
+      document.getElementById('import-status').innerHTML = '<span class="error-text">✗</span>';
+      setTimeout(() => document.getElementById('import-status').textContent = '', 3000);
+    }
+
+    // Reset file input
+    event.target.value = '';
+  });
+
+  // Close modals when clicking outside
+  [settingsModal, confirmationModal].forEach(modal => {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) {
+        modal.classList.add('hidden');
+      }
+    });
+  });
 });
