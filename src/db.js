@@ -14,6 +14,7 @@ db.version(1).stores({
  * @param {string} pageData.url
  * @param {string} pageData.title
  * @param {Float32Array} pageData.embedding - The generated vector
+ * @returns {Promise<object>} The saved page data with ID
  */
 export async function addOrUpdatePage(pageData) {
   try {
@@ -30,7 +31,17 @@ export async function addOrUpdatePage(pageData) {
     });
 
     console.log(`Successfully saved embedding for: ${title}`);
+    
+    // Return the page data with the ID
+    return {
+      id,
+      url,
+      title,
+      embedding,
+      timestamp,
+    };
   } catch (error) {
     console.error(`Failed to save page ${pageData.url}:`, error);
+    return null;
   }
 }

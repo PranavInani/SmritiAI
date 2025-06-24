@@ -49,10 +49,15 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     embedding: embedding.data,
                 };
 
-                await addOrUpdatePage(pageData);
+                const savedPage = await addOrUpdatePage(pageData);
 
-                // Add to search index efficiently
-                await addPageToIndex(pageData);
+                // Add to search index efficiently with the page ID
+                if (savedPage && savedPage.id) {
+                    await addPageToIndex({
+                        ...pageData,
+                        id: savedPage.id
+                    });
+                }
 
             } catch (error) {
                 console.error('Failed to process page data:', error);
