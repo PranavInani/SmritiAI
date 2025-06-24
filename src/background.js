@@ -1,6 +1,6 @@
 import { pipeline, env } from '@xenova/transformers';
 import { db, addOrUpdatePage } from './db';
-import { initSearchIndex, searchPages, addPageToIndex, manualRebuildIndex } from './search';
+import { initSearchIndex, searchPages, addPageToIndex, manualRebuildIndex, getIndexStats } from './search';
 
 // Expose the db instance to the global scope for easy debugging from the console
 globalThis.db = db;
@@ -120,6 +120,24 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 sendResponse({ success: true });
             } catch (error) {
                 console.error('Failed to rebuild HNSW index:', error);
+                sendResponse({ success: false, error: error.message });
+            }
+        })();
+        return true; // Indicate an async response
+    }
+
+    // New handler for index stats requests from the UI
+    if (message.action === 'get-index-stats') {
+        (async () => {
+            try {
+                console.log('Index stats requested from UI...');
+                
+                const stats = await getIndexStats();
+                
+                console.log('Index stats retrieved successfully.');
+                sendResponse({ success: true, stats });
+            } catch (error) {
+                console.error('Failed to get index stats:', error);
                 sendResponse({ success: false, error: error.message });
             }
         })();

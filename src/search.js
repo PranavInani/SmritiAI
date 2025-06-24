@@ -196,3 +196,82 @@ export async function addPageToIndex(pageData) {
 export async function manualRebuildIndex() {
   return await initSearchIndex();
 }
+
+/**
+ * Gets statistics about the current index and database.
+ * @returns {Promise<object>} Index statistics
+ */
+export async function getIndexStats() {
+  try {
+    const stats = {
+      indexInitialized: isIndexInitialized,
+      hnswLibLoaded: hnswLib !== null,
+      indexExists: hnswIndex !== null,
+    };
+
+    // Get database stats
+    const pages = await db.pages.toArray();
+    stats.totalPages = pages.length;
+    
+    if (pages.length > 0) {
+      const validEmbeddings = pages.filter(page => 
+        page.embedding && page.embedding.length === HNSW_CONFIG.dimension
+      );
+      stats.validEmbeddings = validEmbeddings.length;
+      stats.invalidEmbeddings = pages.length - validEmbeddings.length;
+      
+      // Calculate approximate memory usage (rough estimate)
+      const embeddingMemory = validEmbeddings.length * HNSW_CONFIG.dimension * 4; // 4 bytes per float
+      const metadataMemory = pages.length * 200; // rough estimate for page metadata
+      stats.approximateMemoryUsage = {
+        embeddings: embeddingMemory,
+        metadata: metadataMemory,
+        total: embeddingMemory + metadataMemory
+      };
+      
+      // Get oldest and newest entries
+      const timestamps = pages.map(page => new Date(page.timestamp)).sort();
+      stats.oldestEntry = timestamps[0]?.toISOString();
+      stats.newestEntry = timestamps[timestamps.length - 1]?.toISOString();
+    } else {
+      stats.validEmbeddings = 0;
+      stats.invalidEmbeddings = 0;
+      stats.approximateMemoryUsage = { embeddings: 0, metadata: 0, total: 0 };
+      stats.oldestEntry = null;
+      stats.newestEntry = null;
+    }
+
+    // HNSW specific stats
+    if (isIndexInitialized && hnswIndex) {
+      try {
+        stats.hnswCurrentCount = hnswIndex.getCurrentCount ? hnswIndex.getCurrentCount() : 'N/A';
+        stats.hnswMaxElements = hnswIndex.getMaxElements ? hnswIndex.getMaxElements() : HNSW_CONFIG.maxElements;
+      } catch (error) {
+        console.warn('Could not get HNSW stats:', error);
+        stats.hnswCurrentCount = 'N/A';
+        stats.hnswMaxElements = HNSW_CONFIG.maxElements;
+      }
+    } else {
+      stats.hnswCurrentCount = 0;
+      stats.hnswMaxElements = HNSW_CONFIG.maxElements;
+    }
+
+    // Configuration info
+    stats.config = {
+      dimension: HNSW_CONFIG.dimension,
+      maxElements: HNSW_CONFIG.maxElements,
+      ef: HNSW_CONFIG.ef,
+      M: HNSW_CONFIG.M,
+      metric: HNSW_CONFIG.metric
+    };
+
+    return stats;
+  } catch (error) {
+    console.error('Error getting index stats:', error);
+    return {
+      error: error.message,
+      indexInitialized: false,
+      totalPages: 0
+    };
+  }
+}
