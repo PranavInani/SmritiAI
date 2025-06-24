@@ -51,6 +51,18 @@ html, body {
   flex-shrink: 0;
 }
 
+.header-left {
+  display: flex;
+  align-items: center;
+}
+
+.title-dropdown {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 #sidebar-header h1 {
   font-size: 1.1em;
   margin: 0;
@@ -63,6 +75,25 @@ html, body {
   cursor: pointer;
   color: var(--text-color);
   padding: 0 5px;
+}
+
+.dropdown-arrow {
+  background: none;
+  border: none;
+  color: var(--text-color);
+  cursor: pointer;
+  font-size: 0.8em;
+  padding: 4px;
+  border-radius: 4px;
+  transition: transform 0.2s ease, background-color 0.2s ease;
+}
+
+.dropdown-arrow:hover {
+  background-color: var(--msg-received-bg);
+}
+
+.dropdown-arrow.open {
+  transform: rotate(180deg);
 }
 
 #chat-messages {
@@ -218,4 +249,75 @@ body.dark-mode .message li:hover {
 
 .message a:visited:hover {
     color: var(--text-color) !important;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: var(--bg-color);
+  border: 1px solid var(--header-border-color);
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  min-width: 180px;
+  z-index: 1000;
+  margin-top: 4px;
+}
+
+body.dark-mode .dropdown-menu {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.dropdown-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  border-bottom: 1px solid var(--header-border-color);
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover {
+  background-color: var(--msg-received-bg);
+}
+
+.dropdown-item-text {
+  font-size: 0.9em;
+  color: var(--text-color);
+}
+
+.dropdown-item-status {
+  font-size: 0.8em;
+  color: var(--button-bg);
+  font-weight: 500;
+}
+
+.dropdown-item.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.dropdown-item.disabled:hover {
+  background-color: transparent;
+}
+
+/* Spinner animation for rebuild status */
+.spinner {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--header-border-color);
+  border-top: 2px solid var(--button-bg);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }

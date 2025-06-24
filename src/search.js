@@ -81,7 +81,7 @@ export async function searchPages(queryEmbedding, k = 5) {
       : new Float32Array(queryEmbedding);
     
     // Search the HNSW index
-    const searchResult = hnswIndex.searchKnn(queryVector, k);
+    const searchResult = hnswIndex.searchKnn(queryVector, k, undefined);
     
     if (!searchResult.neighbors || searchResult.neighbors.length === 0) {
       console.log('No results found in HNSW search.');
@@ -187,4 +187,12 @@ export async function addPageToIndex(pageData) {
   } catch (error) {
     console.error('Failed to add page to HNSW index:', error);
   }
+}
+
+/**
+ * Manually rebuilds the HNSW index.
+ * This is exposed for UI-triggered rebuilds.
+ */
+export async function manualRebuildIndex() {
+  return await initSearchIndex();
 }

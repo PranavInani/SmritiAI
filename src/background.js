@@ -1,6 +1,6 @@
 import { pipeline, env } from '@xenova/transformers';
 import { db, addOrUpdatePage } from './db';
-import { initSearchIndex, searchPages, addPageToIndex } from './search';
+import { initSearchIndex, searchPages, addPageToIndex, manualRebuildIndex } from './search';
 
 // Expose the db instance to the global scope for easy debugging from the console
 globalThis.db = db;
@@ -103,6 +103,25 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
             console.log("Search results:", results);
             // 3. Send the results back to the UI
             sendResponse(results);
+        })();
+        return true; // Indicate an async response
+    }
+
+    // New handler for rebuild index requests from the UI
+    if (message.action === 'rebuild-index') {
+        (async () => {
+            try {
+                console.log('Rebuilding HNSW index requested from UI...');
+                
+                // Use the manual rebuild function
+                await manualRebuildIndex();
+                
+                console.log('HNSW index rebuild completed successfully.');
+                sendResponse({ success: true });
+            } catch (error) {
+                console.error('Failed to rebuild HNSW index:', error);
+                sendResponse({ success: false, error: error.message });
+            }
         })();
         return true; // Indicate an async response
     }

@@ -12,6 +12,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const themeToggleButton = document.getElementById('theme-toggle-btn');
   const body = document.body;
 
+  // --- Dropdown Elements ---
+  const dropdownToggle = document.getElementById('dropdown-toggle');
+  const dropdownMenu = document.getElementById('dropdown-menu');
+  const rebuildStatus = document.getElementById('rebuild-status');
+
   // --- Model Progress Listener ---
   browser.runtime.onMessage.addListener((message) => {
     if (message.type === 'model-progress') {
@@ -123,5 +128,90 @@ document.addEventListener('DOMContentLoaded', () => {
     resultsMessageElement.appendChild(ul);
     chatMessages.appendChild(resultsMessageElement);
     chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to the bottom
+  }
+
+  // --- Dropdown Logic ---
+  let isDropdownOpen = false;
+
+  function toggleDropdown() {
+    isDropdownOpen = !isDropdownOpen;
+    dropdownToggle.classList.toggle('open', isDropdownOpen);
+    dropdownMenu.classList.toggle('hidden', !isDropdownOpen);
+  }
+
+  function closeDropdown() {
+    isDropdownOpen = false;
+    dropdownToggle.classList.remove('open');
+    dropdownMenu.classList.add('hidden');
+  }
+
+  // Toggle dropdown on click
+  dropdownToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    toggleDropdown();
+  });
+
+  // Close dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!dropdownMenu.contains(e.target) && !dropdownToggle.contains(e.target)) {
+      closeDropdown();
+    }
+  });
+
+  // Handle dropdown item clicks
+  dropdownMenu.addEventListener('click', async (e) => {
+    const dropdownItem = e.target.closest('.dropdown-item');
+    if (!dropdownItem || dropdownItem.classList.contains('disabled')) {
+      return;
+    }
+
+    const action = dropdownItem.dataset.action;
+    
+    // Close dropdown after selection
+    closeDropdown();
+
+    // Handle different actions
+    if (action === 'rebuild-index') {
+      await handleRebuildIndex();
+    }
+    
+    // Future actions can be added here
+  });
+
+  // Rebuild index handler
+  async function handleRebuildIndex() {
+    try {
+      // Disable the rebuild option and show spinner
+      const rebuildItem = document.querySelector('[data-action="rebuild-index"]');
+      rebuildItem.classList.add('disabled');
+      rebuildStatus.innerHTML = '<span class="spinner"></span>';
+
+      // Send message to background script to rebuild index
+      const response = await browser.runtime.sendMessage({
+        action: 'rebuild-index'
+      });
+
+      if (response && response.success) {
+        rebuildStatus.textContent = 'Complete!';
+        // Clear status after 2 seconds
+        setTimeout(() => {
+          rebuildStatus.textContent = '';
+          rebuildItem.classList.remove('disabled');
+        }, 2000);
+      } else {
+        rebuildStatus.textContent = 'Failed';
+        setTimeout(() => {
+          rebuildStatus.textContent = '';
+          rebuildItem.classList.remove('disabled');
+        }, 3000);
+      }
+    } catch (error) {
+      console.error('Error rebuilding index:', error);
+      rebuildStatus.textContent = 'Error';
+      setTimeout(() => {
+        rebuildStatus.textContent = '';
+        document.querySelector('[data-action="rebuild-index"]').classList.remove('disabled');
+      }, 3000);
+    }
   }
 });

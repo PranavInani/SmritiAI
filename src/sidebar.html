@@ -17,7 +17,18 @@
     <!-- The main chat interface -->
     <div id="chat-container">
       <header id="sidebar-header">
-        <h1>SmritiAI</h1>
+        <div class="header-left">
+          <div class="title-dropdown">
+            <h1 id="title-text">SmritiAI</h1>
+            <button id="dropdown-toggle" class="dropdown-arrow" title="Menu">▼</button>
+            <div id="dropdown-menu" class="dropdown-menu hidden">
+              <div class="dropdown-item" data-action="rebuild-index">
+                <span class="dropdown-item-text">Rebuild Index</span>
+                <span class="dropdown-item-status" id="rebuild-status"></span>
+              </div>
+            </div>
+          </div>
+        </div>
         <button id="theme-toggle-btn" title="Toggle Theme">🌙</button>
       </header>
       <div id="chat-messages">
