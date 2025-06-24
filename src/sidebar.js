@@ -1,16 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
   // --- DOM Elements ---
-  const loadingContainer = document.getElementById('loading-container');
-  const progressBar = document.getElementById('progress-bar');
-  const progressText = document.getElementById('progress-text');
-  const loadingText = document.getElementById('loading-text');
-  
   const chatContainer = document.getElementById('chat-container');
   const chatForm = document.getElementById('chat-form');
   const messageInput = document.getElementById('message-input');
   const chatMessages = document.getElementById('chat-messages');
   const themeToggleButton = document.getElementById('theme-toggle-btn');
   const body = document.body;
+
+  // --- Command Dropdown Elements ---
+  const commandDropdown = document.getElementById('command-dropdown');
+  const commandItems = document.querySelectorAll('.command-item');
 
   // --- Dropdown Elements ---
   const dropdownToggle = document.getElementById('dropdown-toggle');
@@ -42,25 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Load settings on startup
   loadSettings();
 
-  // --- Model Progress Listener ---
-  browser.runtime.onMessage.addListener((message) => {
-    if (message.type === 'model-progress') {
-        loadingContainer.classList.remove('hidden'); // Show loading screen
-        chatContainer.classList.add('hidden');
-
-        const { status, file, loaded, total } = message.payload;
-        if (status === 'progress') {
-            const percentage = total > 0 ? ((loaded / total) * 100).toFixed(1) : 0;
-            progressBar.style.width = `${percentage}%`;
-            progressText.textContent = `${percentage}%`;
-            loadingText.textContent = `Downloading: ${file}`;
-        } else if (status === 'ready') {
-            loadingText.textContent = 'Model loaded. Finalizing...';
-            progressBar.style.width = '100%';
-        }
-    }
-  });
-
   // --- Theme Logic ---
   const applyTheme = (theme) => {
     if (theme === 'dark') {
@@ -87,6 +67,13 @@ document.addEventListener('DOMContentLoaded', () => {
     event.preventDefault();
     const messageText = messageInput.value.trim();
     if (!messageText) return;
+
+    // Handle slash commands
+    if (messageText.startsWith('/')) {
+      await handleSlashCommand(messageText);
+      messageInput.value = '';
+      return;
+    }
 
     appendMessage(messageText, 'sent');
     messageInput.value = '';
@@ -116,7 +103,168 @@ document.addEventListener('DOMContentLoaded', () => {
     // Auto-resize textarea
     messageInput.style.height = 'auto';
     messageInput.style.height = `${messageInput.scrollHeight}px`;
+    
+    // Handle command dropdown
+    handleCommandDropdown();
   });
+
+  // --- Command Dropdown Logic ---
+  let selectedCommandIndex = -1;
+
+  function handleCommandDropdown() {
+    const value = messageInput.value;
+    
+    if (value.startsWith('/') && value.length > 0) {
+      const query = value.toLowerCase();
+      const availableCommands = [
+        { command: '/clear', desc: 'Clear chat history' },
+        { command: '/stats', desc: 'Show index statistics' },
+        { command: '/settings', desc: 'Open settings' }
+      ];
+      
+      const filteredCommands = availableCommands.filter(cmd => 
+        cmd.command.startsWith(query) || query === '/'
+      );
+      
+      if (filteredCommands.length > 0) {
+        showCommandDropdown(filteredCommands);
+      } else {
+        hideCommandDropdown();
+      }
+    } else {
+      hideCommandDropdown();
+    }
+  }
+
+  function showCommandDropdown(commands) {
+    commandDropdown.innerHTML = '';
+    
+    commands.forEach((cmd, index) => {
+      const item = document.createElement('div');
+      item.className = 'command-item';
+      item.dataset.command = cmd.command;
+      if (index === selectedCommandIndex) {
+        item.classList.add('selected');
+      }
+      
+      // Highlight matching text
+      const query = messageInput.value.toLowerCase();
+      let commandText = cmd.command;
+      if (query.length > 1) {
+        const matchIndex = cmd.command.toLowerCase().indexOf(query);
+        if (matchIndex !== -1) {
+          commandText = cmd.command.substring(0, matchIndex) + 
+                       '<strong>' + cmd.command.substring(matchIndex, matchIndex + query.length) + '</strong>' + 
+                       cmd.command.substring(matchIndex + query.length);
+        }
+      }
+      
+      item.innerHTML = `
+        <span class="command-name">${commandText}</span>
+        <span class="command-desc">${cmd.desc}</span>
+      `;
+      
+      item.addEventListener('click', () => {
+        messageInput.value = cmd.command;
+        hideCommandDropdown();
+        messageInput.focus();
+      });
+      
+      commandDropdown.appendChild(item);
+    });
+    
+    commandDropdown.classList.remove('hidden');
+    selectedCommandIndex = -1;
+  }
+
+  function hideCommandDropdown() {
+    commandDropdown.classList.add('hidden');
+    selectedCommandIndex = -1;
+  }
+
+  // Handle keyboard navigation for command dropdown
+  messageInput.addEventListener('keydown', (e) => {
+    if (!commandDropdown.classList.contains('hidden')) {
+      const items = commandDropdown.querySelectorAll('.command-item');
+      
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        selectedCommandIndex = Math.min(selectedCommandIndex + 1, items.length - 1);
+        updateCommandSelection(items);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectedCommandIndex = Math.max(selectedCommandIndex - 1, -1);
+        updateCommandSelection(items);
+      } else if (e.key === 'Tab' || e.key === 'Enter') {
+        if (selectedCommandIndex >= 0 && selectedCommandIndex < items.length) {
+          e.preventDefault();
+          const selectedCommand = items[selectedCommandIndex].dataset.command;
+          messageInput.value = selectedCommand;
+          hideCommandDropdown();
+        }
+      } else if (e.key === 'Escape') {
+        hideCommandDropdown();
+      }
+    }
+  });
+
+  function updateCommandSelection(items) {
+    items.forEach((item, index) => {
+      item.classList.toggle('selected', index === selectedCommandIndex);
+    });
+  }
+
+  // Hide dropdown when clicking outside
+  document.addEventListener('click', (e) => {
+    if (!messageInput.contains(e.target) && !commandDropdown.contains(e.target)) {
+      hideCommandDropdown();
+    }
+  });
+
+  // --- Slash Command Handler ---
+  async function handleSlashCommand(command) {
+    const commandMap = {
+      '/clear': handleClearCommand,
+      '/stats': handleStatsCommand,
+      '/settings': handleSettingsCommand
+    };
+
+    const handler = commandMap[command];
+    if (handler) {
+      await handler();
+    } else {
+      appendMessage(`Unknown command: ${command}. Available commands: /clear, /stats, /settings`, 'received');
+    }
+  }
+
+  // Clear chat command
+  function handleClearCommand() {
+    // Clear all messages but keep the initial greeting
+    chatMessages.innerHTML = '<div class="message received">Search your memories.</div>';
+  }
+
+  // Stats command - shows index statistics
+  async function handleStatsCommand() {
+    try {
+      const response = await browser.runtime.sendMessage({
+        action: 'get-index-stats'
+      });
+
+      if (response.success) {
+        displayIndexStats(response.stats);
+      } else {
+        appendMessage('Failed to get index stats.', 'received');
+      }
+    } catch (error) {
+      console.error('Error getting index stats:', error);
+      appendMessage('Error getting index stats. See console for details.', 'received');
+    }
+  }
+
+  // Settings command - opens settings modal
+  function handleSettingsCommand() {
+    settingsModal.classList.remove('hidden');
+  }
 
   function appendMessage(text, type) {
     const messageElement = document.createElement('div');

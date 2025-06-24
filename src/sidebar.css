@@ -131,14 +131,20 @@ html, body {
   gap: 8px;
 }
 
-#message-input {
+.input-container {
+  position: relative;
   flex: 1;
   min-width: 0;
+}
+
+#message-input {
+  width: 100%;
   border: 1px solid var(--input-border-color);
   background-color: var(--bg-color);
   color: var(--text-color);
   border-radius: 15px;
   padding: 8px 12px;
+  box-sizing: border-box;
 }
 
 #chat-form button {
@@ -152,49 +158,51 @@ html, body {
   flex-shrink: 0;
 }
 
-/* Add these styles back for the loading UI */
-#loading-container {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
-    background-color: var(--bg-color);
-    z-index: 10;
-    padding: 20px;
-    box-sizing: border-box;
-    text-align: center;
+/* Command Dropdown Styles */
+.command-dropdown {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  background-color: var(--bg-color);
+  border: 1px solid var(--input-border-color);
+  border-radius: 8px;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  margin-bottom: 5px;
+  max-height: 200px;
+  overflow-y: auto;
 }
 
-#loading-text {
-    font-size: 1.1em;
-    margin-bottom: 15px;
+.command-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--header-border-color);
+  transition: background-color 0.2s ease;
 }
 
-#progress-bar-container {
-    width: 90%;
-    height: 20px;
-    background-color: #e0e0e0;
-    border-radius: 10px;
-    overflow: hidden;
-    margin-bottom: 10px;
-    border: 1px solid #ccc;
+.command-item:last-child {
+  border-bottom: none;
 }
 
-#progress-bar {
-    width: 0%;
-    height: 100%;
-    background-color: #4285F4;
-    transition: width 0.2s ease-in-out;
+.command-item:hover,
+.command-item.selected {
+  background-color: var(--msg-received-bg);
 }
 
-#progress-text {
-    font-size: 0.9em;
-    color: #333;
+.command-name {
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  color: var(--button-bg);
+}
+
+.command-desc {
+  font-size: 0.85em;
+  color: var(--text-color);
+  opacity: 0.7;
 }
 
 .hidden {
@@ -482,13 +490,6 @@ body.dark-mode .dropdown-menu {
 
 .btn-danger:hover {
   background-color: #c82333;
-}
-
-/* Progress and status styles */
-.progress-text {
-  font-size: 0.8em;
-  color: var(--button-bg);
-  font-style: italic;
 }
 
 .success-text {

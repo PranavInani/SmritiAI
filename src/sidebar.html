@@ -5,15 +5,6 @@
     <link rel="stylesheet" href="sidebar.css"/>
   </head>
   <body>
-    <!-- This will be shown during the initial model download -->
-    <div id="loading-container" class="hidden">
-        <div id="loading-text">Preparing AI model for first use...</div>
-        <div id="progress-bar-container">
-            <div id="progress-bar"></div>
-        </div>
-        <div id="progress-text">0%</div>
-    </div>
-
     <!-- The main chat interface -->
     <div id="chat-container">
       <header id="sidebar-header">
@@ -52,10 +43,27 @@
         <button id="theme-toggle-btn" title="Toggle Theme">🌙</button>
       </header>
       <div id="chat-messages">
-        <div class="message received">Hello, What can I help you with?</div>
+        <div class="message received">Search your memories.</div>
       </div>
       <form id="chat-form">
-        <input type="text" id="message-input" placeholder="Type a message..." autocomplete="off">
+        <div class="input-container">
+          <input type="text" id="message-input" placeholder="Type a message or / for commands..." autocomplete="off">
+          <!-- Command dropdown menu -->
+          <div id="command-dropdown" class="command-dropdown hidden">
+            <div class="command-item" data-command="/clear">
+              <span class="command-name">/clear</span>
+              <span class="command-desc">Clear chat history</span>
+            </div>
+            <div class="command-item" data-command="/stats">
+              <span class="command-name">/stats</span>
+              <span class="command-desc">Show index statistics</span>
+            </div>
+            <div class="command-item" data-command="/settings">
+              <span class="command-name">/settings</span>
+              <span class="command-desc">Open settings</span>
+            </div>
+          </div>
+        </div>
         <button type="submit">Send</button>
       </form>
     </div>

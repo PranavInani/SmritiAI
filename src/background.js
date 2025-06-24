@@ -16,10 +16,10 @@ class EmbeddingPipelineSingleton {
     static model = 'Xenova/all-MiniLM-L6-v2';
     static instance = null;
 
-    static async getInstance(progress_callback = null) {
+    static async getInstance() {
         if (this.instance === null) {
             console.log('Singleton: Pipeline not initialized. Initializing...');
-            this.instance = pipeline(this.task, this.model, { progress_callback });
+            this.instance = pipeline(this.task, this.model);
         } else {
             console.log('Singleton: Pipeline already initialized.');
         }
@@ -70,12 +70,9 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         // Run the pipeline asynchronously
         (async () => {
             // 1. Get the pipeline instance. This will load it if it's the first time.
-            const extractor = await EmbeddingPipelineSingleton.getInstance((progress) => {
-                // 2. Send progress updates back to the sidebar
-                browser.runtime.sendMessage({ type: 'model-progress', payload: progress });
-            });
+            const extractor = await EmbeddingPipelineSingleton.getInstance();
 
-            // 3. Generate the embedding
+            // 2. Generate the embedding
             const output = await extractor(message.text, { pooling: 'mean', normalize: true });
 
             // 4. Send the result back
