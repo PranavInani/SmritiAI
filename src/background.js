@@ -1,7 +1,9 @@
 import { pipeline, env } from '@xenova/transformers';
-// Import both 'db' and 'addOrUpdatePage' from your db file
-import { addOrUpdatePage } from './db';
+import { db, addOrUpdatePage } from './db';
+import { initSearchIndex, searchPages, addPageToIndex } from './search';
 
+// Expose the db instance to the global scope for easy debugging from the console
+globalThis.db = db;
 
 env.allowLocalModels = false; // Ensure we use the remote -> cache flow
 
@@ -25,6 +27,9 @@ class EmbeddingPipelineSingleton {
     }
 }
 
+// Initialize the search index when the extension first starts up.
+initSearchIndex();
+
 // Listen for messages from other parts of the extension
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.action === 'processPageData') {
@@ -38,19 +43,22 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                 const embedding = await extractor(message.data.content, { pooling: 'mean', normalize: true });
                 console.log('3. Embedding generated successfully.');
 
-                // 4. Save to DB, but no longer pass the textContent.
-                await addOrUpdatePage({
+                const pageData = {
                     url: message.data.url,
                     title: message.data.title,
-                    // textContent property is now removed from the object being saved.
                     embedding: embedding.data,
-                });
+                };
+
+                await addOrUpdatePage(pageData);
+
+                // Add to search index efficiently
+                await addPageToIndex(pageData);
 
             } catch (error) {
                 console.error('Failed to process page data:', error);
             }
         })();
-        return; // No response needed for this action
+        return;
     }
 
     if (message.type === 'get-embedding') {
@@ -71,5 +79,26 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
         // return true to indicate we will send a response asynchronously
         return true;
+    }
+
+    // New handler for search requests from the UI
+    if (message.action === 'search') {
+        (async () => {
+            console.log(`Searching for: "${message.query}"`);
+            const extractor = await EmbeddingPipelineSingleton.getInstance();
+            
+            // 1. Generate an embedding for the user's query
+            const queryEmbedding = await extractor(message.query, { pooling: 'mean', normalize: true });
+            console.log(`Query embedding generated, length: ${queryEmbedding.data.length}`);
+
+            // 2. Use our search function to find the top results
+            const results = await searchPages(queryEmbedding.data, 5);
+            
+            console.log(`Search results found: ${results.length} pages`);
+            console.log("Search results:", results);
+            // 3. Send the results back to the UI
+            sendResponse(results);
+        })();
+        return true; // Indicate an async response
     }
 });

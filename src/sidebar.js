@@ -61,29 +61,31 @@ document.addEventListener('DOMContentLoaded', () => {
     appendMessage(messageText, 'sent');
     messageInput.value = '';
     
+    const thinkingMessage = appendMessage('Thinking...', 'received');
+
     try {
-      // Send message to background to get embedding
-      const response = await browser.runtime.sendMessage({
-        type: 'get-embedding',
-        text: messageText
+      // Send the search query to the background script
+      const results = await browser.runtime.sendMessage({
+        action: 'search',
+        query: messageText
       });
 
-      // Hide loading screen and show chat again
-      loadingContainer.classList.add('hidden');
-      chatContainer.classList.remove('hidden');
+      // Remove the "Thinking..." message before displaying results
+      thinkingMessage.remove();
 
-      if (response.status === 'complete') {
-        // For now, just log the embedding to confirm it works
-        console.log('Received embedding:', response.output.slice(0, 5));
-        appendMessage('I have converted your message to an embedding (see console).', 'received');
-      }
+      // Render the results in the chat window
+      displayResults(results);
 
     } catch (error) {
-      console.error('Error getting embedding:', error);
-      appendMessage('Sorry, an error occurred while processing your message.', 'received');
-      loadingContainer.classList.add('hidden');
-      chatContainer.classList.remove('hidden');
+      console.error('Error performing search:', error);
+      thinkingMessage.textContent = 'Search failed. See console for details.';
     }
+  });
+
+  messageInput.addEventListener('input', () => {
+    // Auto-resize textarea
+    messageInput.style.height = 'auto';
+    messageInput.style.height = `${messageInput.scrollHeight}px`;
   });
 
   function appendMessage(text, type) {
@@ -93,5 +95,33 @@ document.addEventListener('DOMContentLoaded', () => {
     chatMessages.appendChild(messageElement);
     chatMessages.scrollTop = chatMessages.scrollHeight;
     return messageElement;
+  }
+
+  // --- Search Result Display Logic ---
+  function displayResults(results) {
+    if (!results || results.length === 0) {
+        appendMessage('No results found.', 'received');
+        return;
+    }
+
+    // Create a new message element to hold the results list
+    const resultsMessageElement = document.createElement('div');
+    resultsMessageElement.classList.add('message', 'received');
+
+    // Create and append a list for the results
+    const ul = document.createElement('ul');
+    results.forEach(page => {
+        const li = document.createElement('li');
+        const a = document.createElement('a');
+        a.href = page.url;
+        a.textContent = page.title;
+        a.title = page.url; // Show the full URL on hover
+        a.target = '_blank'; // Open link in a new tab
+        li.appendChild(a);
+        ul.appendChild(li);
+    });
+    resultsMessageElement.appendChild(ul);
+    chatMessages.appendChild(resultsMessageElement);
+    chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll to the bottom
   }
 });

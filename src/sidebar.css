@@ -169,3 +169,53 @@ html, body {
 .hidden {
     display: none !important;
 }
+
+/* Search results styling */
+.message ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.message li {
+    background-color: rgba(255, 255, 255, 0.1);
+    margin: 8px 0;
+    padding: 12px;
+    border-radius: 8px;
+    border-left: 3px solid var(--button-bg);
+    transition: background-color 0.2s ease;
+}
+
+.message li:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+body.dark-mode .message li {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .message li:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.message a {
+    color: var(--button-bg) !important;
+    text-decoration: none;
+    font-weight: 500;
+    display: block;
+    word-break: break-word;
+    transition: color 0.2s ease;
+}
+
+.message a:hover {
+    color: var(--text-color) !important;
+    text-decoration: underline;
+}
+
+.message a:visited {
+    color: var(--button-bg) !important;
+}
+
+.message a:visited:hover {
+    color: var(--text-color) !important;
+}
