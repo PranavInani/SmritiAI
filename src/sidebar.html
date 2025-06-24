@@ -13,10 +13,6 @@
             <h1 id="title-text">SmritiAI</h1>
             <button id="dropdown-toggle" class="dropdown-arrow" title="Menu">▼</button>
             <div id="dropdown-menu" class="dropdown-menu hidden">
-              <div class="dropdown-item" data-action="rebuild-index">
-                <span class="dropdown-item-text">Rebuild Index</span>
-                <span class="dropdown-item-status" id="rebuild-status"></span>
-              </div>
               <div class="dropdown-item" data-action="index-stats">
                 <span class="dropdown-item-text">Index Stats</span>
                 <span class="dropdown-item-status" id="stats-status"></span>
@@ -112,6 +108,17 @@
                 Auto-index new pages
               </label>
               <span class="setting-help">Automatically add new pages to search index</span>
+            </div>
+          </div>
+
+          <div class="settings-section">
+            <h3>Index Management</h3>
+            <div class="setting-item">
+              <button id="rebuild-index-btn" class="btn-secondary">
+                <span id="rebuild-index-text">Rebuild Index</span>
+                <span id="rebuild-index-spinner" class="hidden"> 🔄</span>
+              </button>
+              <span class="setting-help">Rebuild the search index from all saved pages</span>
             </div>
           </div>
         </div>

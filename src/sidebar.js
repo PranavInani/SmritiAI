@@ -14,7 +14,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Dropdown Elements ---
   const dropdownToggle = document.getElementById('dropdown-toggle');
   const dropdownMenu = document.getElementById('dropdown-menu');
-  const rebuildStatus = document.getElementById('rebuild-status');
 
   // --- Modal Elements ---
   const settingsModal = document.getElementById('settings-modal');
@@ -23,6 +22,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const closeConfirm = document.getElementById('close-confirm');
   const saveSettings = document.getElementById('save-settings');
   const resetSettings = document.getElementById('reset-settings');
+  const rebuildIndexBtn = document.getElementById('rebuild-index-btn');
+  const rebuildIndexText = document.getElementById('rebuild-index-text');
+  const rebuildIndexSpinner = document.getElementById('rebuild-index-spinner');
   const confirmYes = document.getElementById('confirm-yes');
   const confirmNo = document.getElementById('confirm-no');
   const confirmTitle = document.getElementById('confirm-title');
@@ -344,9 +346,7 @@ document.addEventListener('DOMContentLoaded', () => {
     closeDropdown();
 
     // Handle different actions
-    if (action === 'rebuild-index') {
-      await handleRebuildIndex();
-    } else if (action === 'index-stats') {
+    if (action === 'index-stats') {
       await handleIndexStats();
     } else if (action === 'settings') {
       openSettingsModal();
@@ -361,13 +361,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Future actions can be added here
   });
 
-  // Rebuild index handler
+  // Rebuild index handler (now in settings)
   async function handleRebuildIndex() {
     try {
-      // Disable the rebuild option and show spinner
-      const rebuildItem = document.querySelector('[data-action="rebuild-index"]');
-      rebuildItem.classList.add('disabled');
-      rebuildStatus.innerHTML = '<span class="spinner"></span>';
+      // Disable the rebuild button and show spinner
+      rebuildIndexBtn.disabled = true;
+      rebuildIndexText.textContent = 'Rebuilding...';
+      rebuildIndexSpinner.classList.remove('hidden');
 
       // Send message to background script to rebuild index
       const response = await browser.runtime.sendMessage({
@@ -375,25 +375,28 @@ document.addEventListener('DOMContentLoaded', () => {
       });
 
       if (response && response.success) {
-        rebuildStatus.textContent = 'Complete!';
-        // Clear status after 2 seconds
+        rebuildIndexText.textContent = 'Rebuild Complete!';
+        rebuildIndexSpinner.classList.add('hidden');
+        // Reset button after 2 seconds
         setTimeout(() => {
-          rebuildStatus.textContent = '';
-          rebuildItem.classList.remove('disabled');
+          rebuildIndexText.textContent = 'Rebuild Index';
+          rebuildIndexBtn.disabled = false;
         }, 2000);
       } else {
-        rebuildStatus.textContent = 'Failed';
+        rebuildIndexText.textContent = 'Rebuild Failed';
+        rebuildIndexSpinner.classList.add('hidden');
         setTimeout(() => {
-          rebuildStatus.textContent = '';
-          rebuildItem.classList.remove('disabled');
+          rebuildIndexText.textContent = 'Rebuild Index';
+          rebuildIndexBtn.disabled = false;
         }, 3000);
       }
     } catch (error) {
       console.error('Error rebuilding index:', error);
-      rebuildStatus.textContent = 'Error';
+      rebuildIndexText.textContent = 'Rebuild Error';
+      rebuildIndexSpinner.classList.add('hidden');
       setTimeout(() => {
-        rebuildStatus.textContent = '';
-        document.querySelector('[data-action="rebuild-index"]').classList.remove('disabled');
+        rebuildIndexText.textContent = 'Rebuild Index';
+        rebuildIndexBtn.disabled = false;
       }, 3000);
     }
   }
@@ -573,6 +576,11 @@ document.addEventListener('DOMContentLoaded', () => {
   
   // Settings modal
   closeSettings.addEventListener('click', closeSettingsModal);
+  
+  // Rebuild index button
+  rebuildIndexBtn.addEventListener('click', async () => {
+    await handleRebuildIndex();
+  });
   
   saveSettings.addEventListener('click', () => {
     // Get values from form
