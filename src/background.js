@@ -214,4 +214,61 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         })();
         return true;
     }
+
+    // Export browser history handler
+    if (message.action === 'export-browser-history') {
+        (async () => {
+            try {
+                console.log('Exporting browser history...');
+                
+                // Calculate start time based on the selected range
+                const now = Date.now();
+                let startTime = 0; // Default to all time
+                
+                if (message.timeRange && message.timeRange !== 'all') {
+                    const timeRanges = {
+                        'week': 7 * 24 * 60 * 60 * 1000,        // 7 days
+                        'month': 30 * 24 * 60 * 60 * 1000,      // 30 days
+                        '6months': 6 * 30 * 24 * 60 * 60 * 1000, // 6 months (approx)
+                        'year': 365 * 24 * 60 * 60 * 1000,      // 1 year
+                        '2years': 2 * 365 * 24 * 60 * 60 * 1000  // 2 years
+                    };
+                    
+                    if (timeRanges[message.timeRange]) {
+                        startTime = now - timeRanges[message.timeRange];
+                    }
+                }
+                
+                console.log(`Exporting history from: ${message.timeRange || 'all time'}`);
+                
+                // Query browser history using the history API
+                const historyItems = await browser.history.search({
+                    text: '',           // Empty text returns all history
+                    maxResults: 100000, // Large number to get as much as possible
+                    startTime: startTime // From calculated start time
+                });
+
+                // Format the history data
+                const formattedHistory = historyItems.map(item => ({
+                    url: item.url,
+                    title: item.title || 'Untitled',
+                    visitCount: item.visitCount || 0,
+                    lastVisitTime: item.lastVisitTime ? new Date(item.lastVisitTime).toISOString() : null,
+                    typedCount: item.typedCount || 0
+                }));
+
+                console.log(`Exported ${formattedHistory.length} history items from ${message.timeRange || 'all time'}`);
+                sendResponse({ 
+                    success: true, 
+                    history: formattedHistory,
+                    count: formattedHistory.length,
+                    timeRange: message.timeRange || 'all'
+                });
+            } catch (error) {
+                console.error('Failed to export browser history:', error);
+                sendResponse({ success: false, error: error.message });
+            }
+        })();
+        return true;
+    }
 });

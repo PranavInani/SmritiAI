@@ -25,6 +25,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const rebuildIndexBtn = document.getElementById('rebuild-index-btn');
   const rebuildIndexText = document.getElementById('rebuild-index-text');
   const rebuildIndexSpinner = document.getElementById('rebuild-index-spinner');
+  const exportHistoryBtn = document.getElementById('export-history-btn');
+  const exportHistoryText = document.getElementById('export-history-text');
+  const exportHistorySpinner = document.getElementById('export-history-spinner');
+  const historyTimeRange = document.getElementById('history-time-range');
   const confirmYes = document.getElementById('confirm-yes');
   const confirmNo = document.getElementById('confirm-no');
   const confirmTitle = document.getElementById('confirm-title');
@@ -401,6 +405,67 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Export browser history handler
+  async function handleExportHistory() {
+    try {
+      // Disable the export button and show spinner
+      exportHistoryBtn.disabled = true;
+      exportHistoryText.textContent = 'Exporting...';
+      exportHistorySpinner.classList.remove('hidden');
+
+      // Get the selected time range
+      const timeRange = historyTimeRange.value;
+
+      // Send message to background script to get browser history
+      const response = await browser.runtime.sendMessage({
+        action: 'export-browser-history',
+        timeRange: timeRange
+      });
+
+      if (response && response.success) {
+        // Create and download the file
+        const dataStr = JSON.stringify(response.history, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        
+        // Include time range in filename
+        const timeRangeText = timeRange === 'all' ? 'all-time' : timeRange;
+        link.download = `firefox-history-${timeRangeText}-${new Date().toISOString().split('T')[0]}.json`;
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        exportHistoryText.textContent = `Export Complete! (${response.count} items)`;
+        exportHistorySpinner.classList.add('hidden');
+        // Reset button after 3 seconds
+        setTimeout(() => {
+          exportHistoryText.textContent = 'Export Browser History';
+          exportHistoryBtn.disabled = false;
+        }, 3000);
+      } else {
+        exportHistoryText.textContent = 'Export Failed';
+        exportHistorySpinner.classList.add('hidden');
+        setTimeout(() => {
+          exportHistoryText.textContent = 'Export Browser History';
+          exportHistoryBtn.disabled = false;
+        }, 3000);
+      }
+    } catch (error) {
+      console.error('Error exporting browser history:', error);
+      exportHistoryText.textContent = 'Export Error';
+      exportHistorySpinner.classList.add('hidden');
+      setTimeout(() => {
+        exportHistoryText.textContent = 'Export Browser History';
+        exportHistoryBtn.disabled = false;
+      }, 3000);
+    }
+  }
+
   // Index stats handler
   async function handleIndexStats() {
     try {
@@ -580,6 +645,11 @@ document.addEventListener('DOMContentLoaded', () => {
   // Rebuild index button
   rebuildIndexBtn.addEventListener('click', async () => {
     await handleRebuildIndex();
+  });
+
+  // Export history button
+  exportHistoryBtn.addEventListener('click', async () => {
+    await handleExportHistory();
   });
   
   saveSettings.addEventListener('click', () => {

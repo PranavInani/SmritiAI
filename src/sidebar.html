@@ -121,6 +121,29 @@
               <span class="setting-help">Rebuild the search index from all saved pages</span>
             </div>
           </div>
+
+          <div class="settings-section">
+            <h3>Browser Data Export</h3>
+            <div class="setting-item">
+              <label for="history-time-range">Export time range:</label>
+              <select id="history-time-range">
+                <option value="week">Last Week</option>
+                <option value="month">Last Month</option>
+                <option value="6months">Last 6 Months</option>
+                <option value="year">Last Year</option>
+                <option value="2years">Last 2 Years</option>
+                <option value="all" selected>All Time</option>
+              </select>
+              <span class="setting-help">Select the time period for history export</span>
+            </div>
+            <div class="setting-item">
+              <button id="export-history-btn" class="btn-secondary">
+                <span id="export-history-text">Export Browser History</span>
+                <span id="export-history-spinner" class="hidden"> 📥</span>
+              </button>
+              <span class="setting-help">Export Firefox browsing history as JSON file</span>
+            </div>
+          </div>
         </div>
         <div class="modal-footer">
           <button id="save-settings" class="btn-primary">Save Settings</button>
