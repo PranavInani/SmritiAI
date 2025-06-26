@@ -5,12 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build"
+    "build": "vite build",
+    "package": "npm run build && node package.js"
   },
   "devDependencies": {
     "vite": "^5.0.0",
     "vite-plugin-web-extension": "^4.0.0",
-    "webextension-polyfill": "^0.10.0"
+    "webextension-polyfill": "^0.10.0",
+    "zip-a-folder": "^3.1.9"
   },
   "dependencies": {
     "@mozilla/readability": "^0.6.0",
