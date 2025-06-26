@@ -155,6 +155,7 @@ SmritiAI/
 
 - **Development build**: `npm run dev`
 - **Production build**: `npm run build`
+- **Package for store**: `npm run package` - Creates a zip file ready for Firefox Add-ons store upload
 
 ### Key Dependencies
 
