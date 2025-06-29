@@ -1,4 +1,5 @@
 # SmritiAI 🧠
+[🦊Get on Firefox store](https://addons.mozilla.org/en-US/firefox/addon/smritiai/)
 
 **Search Your Browser History with AI**
 
@@ -65,7 +66,7 @@ SmritiAI is a Firefox browser extension that uses AI-powered semantic search to 
 
 1. **Clone the repository**
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/PranavInani/SmritiAI.git
    cd SmritiAI
    ```
 
