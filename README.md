@@ -20,30 +20,49 @@ SmritiAI is a Firefox browser extension that uses AI-powered semantic search to 
 
 ### Core Components
 
-1. **Background Script** (`background.js`)
-   - Manages AI model loading and embedding generation
-   - Handles message passing between components
-   - Processes webpage content and generates embeddings
-   - Manages search index operations
+1. **Background Script** (`src/background/`)
+   - **background.js**: Main entry point and AI pipeline management
+   - **handlers/**: Specialized message handlers for different operations
+     - `message-router.js`: Routes messages to appropriate handlers
+     - `search-handler.js`: Processes search queries and returns results
+     - `page-processor.js`: Handles new page indexing and content processing
+     - `history-processor.js`: Batch processes browser history
+     - `data-handler.js`: Manages data export/import operations
+     - `settings-handler.js`: Handles settings updates and retrieval
+   - **services/**: Core business logic services
+     - `embedding-service.js`: AI model management and embedding generation
+   - **utils/**: Utility functions for message handling
 
-2. **Content Script** (`content.js`)
+2. **User Interface** (`src/sidebar/`)
+   - **sidebar.js**: Main UI entry point and initialization
+   - **components/**: Modular UI components
+     - `chat-interface.js`: Search interface and message display
+     - `command-system.js`: Slash command processing
+     - `settings-modal.js`: Settings configuration UI
+     - `confirmation-modal.js`: Action confirmation dialogs
+     - `header-dropdown.js`: Main navigation dropdown
+     - `theme-manager.js`: Dark/light theme management
+   - **handlers/**: UI-specific handlers
+     - `first-time-handler.js`: Welcome experience for new users
+     - `stats-handler.js`: Index statistics display
+     - `data-handler.js`: Data export/import UI logic
+   - **services/**: UI services
+     - `message-service.js`: Communication with background script
+   - **utils/**: UI utility functions for DOM and storage operations
+
+3. **Content Script** (`src/content.js`)
    - Extracts readable content from web pages using Mozilla Readability
    - Sends processed content to background script for indexing
 
-3. **Database Layer** (`db.js`)
+4. **Database Layer** (`src/db.js`)
    - Uses Dexie (IndexedDB wrapper) for local data storage
    - Stores page metadata and embeddings
+   - Handles unique URL constraints and updates
 
-4. **Search Engine** (`search.js`)
+5. **Search Engine** (`src/search.js`)
    - Implements HNSW vector search algorithm
    - Provides semantic similarity search capabilities
    - Handles index management and rebuilding
-
-5. **User Interface** (`sidebar.html`, `sidebar.js`, `sidebar.css`)
-   - Chat-like interface for search queries
-   - Settings management
-   - Dark/light theme support
-   - Command system with slash commands
 
 ### Technology Stack
 
@@ -53,6 +72,15 @@ SmritiAI is a Firefox browser extension that uses AI-powered semantic search to 
 - **Content Extraction**: @mozilla/readability
 - **Build Tool**: Vite with web extension plugin
 - **UI**: Vanilla JavaScript with modern CSS
+- **Architecture**: Modular ES6 modules with clear separation of concerns
+
+### Modular Architecture Benefits
+
+- **Maintainability**: Each module has a single responsibility and clear interface
+- **Testability**: Components can be tested in isolation
+- **Scalability**: Easy to add new features without touching existing code
+- **Code Organization**: Related functionality grouped together
+- **Performance**: Only load required modules when needed
 
 ## 🚀 Installation
 
@@ -146,18 +174,47 @@ Access settings through the dropdown menu or `/settings` command:
 ```
 SmritiAI/
 ├── src/
-│   ├── background.js      # Background script with AI processing
-│   ├── content.js         # Content extraction script
-│   ├── db.js             # Database layer with Dexie
-│   ├── search.js         # HNSW search implementation
-│   ├── sidebar.html      # Main UI HTML
-│   ├── sidebar.js        # UI logic and interactions
-│   └── sidebar.css       # Styling and themes
+│   ├── background/              # Background script modules
+│   │   ├── background.js        # Main entry point and AI pipeline
+│   │   ├── handlers/            # Message handlers
+│   │   │   ├── message-router.js
+│   │   │   ├── search-handler.js
+│   │   │   ├── page-processor.js
+│   │   │   ├── history-processor.js
+│   │   │   ├── data-handler.js
+│   │   │   └── settings-handler.js
+│   │   ├── services/            # Core services
+│   │   │   └── embedding-service.js
+│   │   └── utils/               # Utility functions
+│   │       └── message-helpers.js
+│   ├── sidebar/                 # UI modules
+│   │   ├── sidebar.js           # Main UI entry point
+│   │   ├── components/          # UI components
+│   │   │   ├── chat-interface.js
+│   │   │   ├── command-system.js
+│   │   │   ├── settings-modal.js
+│   │   │   ├── confirmation-modal.js
+│   │   │   ├── header-dropdown.js
+│   │   │   └── theme-manager.js
+│   │   ├── handlers/            # UI handlers
+│   │   │   ├── first-time-handler.js
+│   │   │   ├── stats-handler.js
+│   │   │   └── data-handler.js
+│   │   ├── services/            # UI services
+│   │   │   └── message-service.js
+│   │   └── utils/               # UI utilities
+│   │       ├── dom-helpers.js
+│   │       └── storage-helpers.js
+│   ├── content.js               # Content extraction script
+│   ├── db.js                    # Database layer with Dexie
+│   ├── search.js                # HNSW search implementation
+│   ├── sidebar.html             # Main UI HTML
+│   └── sidebar.css              # Styling and themes
 ├── public/
-│   └── icon/            # Extension icons
-├── manifest.json        # Extension manifest
-├── package.json        # Dependencies and scripts
-└── vite.config.ts      # Build configuration
+│   └── icon/                    # Extension icons
+├── manifest.json                # Extension manifest
+├── package.json                 # Dependencies and scripts
+└── vite.config.ts               # Build configuration
 ```
 
 ## 🛠️ Development
@@ -167,6 +224,24 @@ SmritiAI/
 - **Development build**: `npm run dev`
 - **Production build**: `npm run build`
 - **Package for store**: `npm run package` - Creates a zip file ready for Firefox Add-ons store upload
+
+### Code Organization
+
+The codebase follows a modular architecture with clear separation of concerns:
+
+- **Background modules**: Handle AI processing, message routing, and data management
+- **Sidebar modules**: Manage UI components, user interactions, and state
+- **Shared modules**: Provide common functionality for database and search operations
+- **ES6 modules**: All code uses modern JavaScript import/export syntax
+- **Single responsibility**: Each module has one clear purpose and well-defined interface
+
+### Development Guidelines
+
+- Keep modules focused and small (< 100 lines when possible)
+- Use clear naming conventions for files and functions
+- Document public interfaces and complex logic
+- Test modules independently before integration
+- Follow the established patterns for message passing and error handling
 
 ### Key Dependencies
 
