@@ -185,7 +185,6 @@ SmritiAI/
 
 ## 🐛 Known Issues
 
-- It currently can only track the pages after it is installed(It doesnt process past history).
 - Large pages may take longer to process
 - Initial model loading requires internet connection
 - Maximum index size is limited by browser storage
