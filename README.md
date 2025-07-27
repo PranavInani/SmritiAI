@@ -8,6 +8,7 @@ SmritiAI is a Firefox browser extension that uses AI-powered semantic search to 
 ## ✨ Features
 
 - **🔍 AI-Powered Semantic Search**: Search your browsing history using natural language queries
+- **🌐 Domain Filtering**: Filter search results by specific domains or exclude unwanted sites
 - **📄 Content Analysis**: Automatically extracts and analyzes webpage content using Mozilla's Readability
 - **⚡ Fast Vector Search**: Uses HNSW (Hierarchical Navigable Small World) algorithm for efficient similarity search
 - **🎨 Modern UI**: Clean, responsive sidebar interface with dark/light theme support
@@ -31,13 +32,16 @@ SmritiAI is a Firefox browser extension that uses AI-powered semantic search to 
      - `settings-handler.js`: Handles settings updates and retrieval
    - **services/**: Core business logic services
      - `embedding-service.js`: AI model management and embedding generation
-   - **utils/**: Utility functions for message handling
+      - **utils/**: Shared utility functions
+     - `message-helpers.js`: Async message handling wrappers
+     - `domain-filter.js`: Domain filtering logic and utilities
 
 2. **User Interface** (`src/sidebar/`)
    - **sidebar.js**: Main UI entry point and initialization
    - **components/**: Modular UI components
      - `chat-interface.js`: Search interface and message display
      - `command-system.js`: Slash command processing
+     - `domain-filter.js`: Domain filtering UI and functionality
      - `settings-modal.js`: Settings configuration UI
      - `confirmation-modal.js`: Action confirmation dialogs
      - `header-dropdown.js`: Main navigation dropdown
@@ -145,6 +149,46 @@ You can skip this step and process your history later from the settings.
 - `/clear` - Clear chat history
 - `/stats` - Show index statistics
 - `/settings` - Open settings panel
+- `/domain` - Show current domain filter status
+- `/domain:example.com` - Filter results to specific domain
+- `/domain:clear` - Clear domain filters
+
+### Domain Filtering
+
+SmritiAI supports powerful domain filtering to help you focus on specific websites or exclude unwanted results:
+
+#### **Filter Syntax**
+- **Include domains**: `github.com,stackoverflow.com`
+- **Exclude domains**: `-ads.com,-tracker.com`
+- **Mixed filtering**: `github.com,wikipedia.org,-ads.com,-spam.com`
+
+#### **Usage Methods**
+
+**1. UI Method:**
+1. Click the "🌐 Domain Filter" button in the sidebar
+2. Enter your filter criteria in the input field
+3. Click "Apply" to activate the filter
+
+**2. Slash Commands:**
+```
+/domain:github.com                    # Include only GitHub
+/domain:github.com,stackoverflow.com  # Include GitHub and StackOverflow
+/domain:-ads.com,-tracker.com         # Exclude ads and trackers
+/domain:github.com,-ads.com           # Include GitHub, exclude ads
+/domain:clear                         # Clear all filters
+```
+
+#### **Examples**
+
+- **Research without distractions**: `/domain:-ads.com,-marketing.com,-spam.com`
+- **Academic sources only**: `/domain:wikipedia.org,arxiv.org,scholar.google.com`
+- **Development resources**: `/domain:github.com,stackoverflow.com,developer.mozilla.org`
+
+#### **Features**
+- **Auto-complete**: Suggests domains from your browsing history
+- **Visual feedback**: Button highlights when filters are active
+- **Smart search**: Automatically searches 3x more results when filtering to ensure relevant matches
+- **Session-based**: Filters persist during your session but reset on reload
 
 ### Settings
 
