@@ -25,10 +25,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const rebuildIndexBtn = document.getElementById('rebuild-index-btn');
   const rebuildIndexText = document.getElementById('rebuild-index-text');
   const rebuildIndexSpinner = document.getElementById('rebuild-index-spinner');
-  const exportHistoryBtn = document.getElementById('export-history-btn');
-  const exportHistoryText = document.getElementById('export-history-text');
-  const exportHistorySpinner = document.getElementById('export-history-spinner');
+  const processHistoryBtn = document.getElementById('process-history-btn');
+  const processHistoryText = document.getElementById('process-history-text');
+  const processHistorySpinner = document.getElementById('process-history-spinner');
   const historyTimeRange = document.getElementById('history-time-range');
+  const historyProgressContainer = document.getElementById('history-progress-container');
+  const historyProgressFill = document.getElementById('history-progress-fill');
+  const historyProgressText = document.getElementById('history-progress-text');
   const confirmYes = document.getElementById('confirm-yes');
   const confirmNo = document.getElementById('confirm-no');
   const confirmTitle = document.getElementById('confirm-title');
@@ -46,6 +49,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Load settings on startup
   loadSettings();
+
+  // Check if this is the first time the user is using the extension
+  checkFirstTimeUser();
 
   // --- Theme Logic ---
   const applyTheme = (theme) => {
@@ -405,63 +411,80 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Export browser history handler
-  async function handleExportHistory() {
+  // Process browser history handler
+  async function handleProcessHistory() {
     try {
-      // Disable the export button and show spinner
-      exportHistoryBtn.disabled = true;
-      exportHistoryText.textContent = 'Exporting...';
-      exportHistorySpinner.classList.remove('hidden');
+      // Disable the process button and show spinner
+      processHistoryBtn.disabled = true;
+      processHistoryText.textContent = 'Processing...';
+      processHistorySpinner.classList.remove('hidden');
+      historyProgressContainer.style.display = 'block';
+      historyProgressFill.style.width = '0%';
+      historyProgressText.textContent = 'Fetching browser history...';
 
       // Get the selected time range
       const timeRange = historyTimeRange.value;
 
-      // Send message to background script to get browser history
+      // Send message to background script to process browser history
       const response = await browser.runtime.sendMessage({
-        action: 'export-browser-history',
+        action: 'process-browser-history',
         timeRange: timeRange
       });
 
       if (response && response.success) {
-        // Create and download the file
-        const dataStr = JSON.stringify(response.history, null, 2);
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        
-        const url = URL.createObjectURL(dataBlob);
-        const link = document.createElement('a');
-        link.href = url;
-        
-        // Include time range in filename
-        const timeRangeText = timeRange === 'all' ? 'all-time' : timeRange;
-        link.download = `firefox-history-${timeRangeText}-${new Date().toISOString().split('T')[0]}.json`;
-        
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        // Listen for progress updates
+        const progressListener = (message) => {
+          if (message.type === 'history-processing-progress') {
+            const progress = Math.round((message.processed / message.total) * 100);
+            historyProgressFill.style.width = `${progress}%`;
+            historyProgressText.textContent = `Processing ${message.processed}/${message.total} pages (${progress}%)`;
+          } else if (message.type === 'history-processing-complete') {
+            browser.runtime.onMessage.removeListener(progressListener);
+            
+            processHistoryText.textContent = `Processing Complete! (${message.processedCount} pages indexed)`;
+            processHistorySpinner.classList.add('hidden');
+            historyProgressFill.style.width = '100%';
+            historyProgressText.textContent = `Successfully processed ${message.processedCount} pages from your browser history`;
+            
+            // Reset button after 5 seconds
+            setTimeout(() => {
+              processHistoryText.textContent = 'Process Browser History';
+              processHistoryBtn.disabled = false;
+              historyProgressContainer.style.display = 'none';
+            }, 5000);
+          } else if (message.type === 'history-processing-error') {
+            browser.runtime.onMessage.removeListener(progressListener);
+            
+            processHistoryText.textContent = 'Processing Failed';
+            processHistorySpinner.classList.add('hidden');
+            historyProgressText.textContent = message.error || 'An error occurred while processing history';
+            
+            setTimeout(() => {
+              processHistoryText.textContent = 'Process Browser History';
+              processHistoryBtn.disabled = false;
+              historyProgressContainer.style.display = 'none';
+            }, 5000);
+          }
+        };
 
-        exportHistoryText.textContent = `Export Complete! (${response.count} items)`;
-        exportHistorySpinner.classList.add('hidden');
-        // Reset button after 3 seconds
-        setTimeout(() => {
-          exportHistoryText.textContent = 'Export Browser History';
-          exportHistoryBtn.disabled = false;
-        }, 3000);
+        browser.runtime.onMessage.addListener(progressListener);
       } else {
-        exportHistoryText.textContent = 'Export Failed';
-        exportHistorySpinner.classList.add('hidden');
+        processHistoryText.textContent = 'Processing Failed';
+        processHistorySpinner.classList.add('hidden');
+        historyProgressContainer.style.display = 'none';
         setTimeout(() => {
-          exportHistoryText.textContent = 'Export Browser History';
-          exportHistoryBtn.disabled = false;
+          processHistoryText.textContent = 'Process Browser History';
+          processHistoryBtn.disabled = false;
         }, 3000);
       }
     } catch (error) {
-      console.error('Error exporting browser history:', error);
-      exportHistoryText.textContent = 'Export Error';
-      exportHistorySpinner.classList.add('hidden');
+      console.error('Error processing browser history:', error);
+      processHistoryText.textContent = 'Processing Error';
+      processHistorySpinner.classList.add('hidden');
+      historyProgressContainer.style.display = 'none';
       setTimeout(() => {
-        exportHistoryText.textContent = 'Export Browser History';
-        exportHistoryBtn.disabled = false;
+        processHistoryText.textContent = 'Process Browser History';
+        processHistoryBtn.disabled = false;
       }, 3000);
     }
   }
@@ -647,9 +670,9 @@ document.addEventListener('DOMContentLoaded', () => {
     await handleRebuildIndex();
   });
 
-  // Export history button
-  exportHistoryBtn.addEventListener('click', async () => {
-    await handleExportHistory();
+  // Process history button
+  processHistoryBtn.addEventListener('click', async () => {
+    await handleProcessHistory();
   });
   
   saveSettings.addEventListener('click', () => {
@@ -743,4 +766,62 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   });
+
+  // --- First Time User Detection ---
+  async function checkFirstTimeUser() {
+    try {
+      const isFirstTime = localStorage.getItem('smriti-ai-first-time');
+      if (!isFirstTime) {
+        // Mark as not first time
+        localStorage.setItem('smriti-ai-first-time', 'false');
+        
+        // Show welcome message
+        showFirstTimeWelcome();
+      }
+    } catch (error) {
+      console.error('Error checking first-time user:', error);
+    }
+  }
+
+  function showFirstTimeWelcome() {
+    const welcomeMessage = document.createElement('div');
+    welcomeMessage.className = 'message received';
+    welcomeMessage.innerHTML = `
+      <div class="first-time-welcome">
+        <p><strong>Welcome to SmritiAI! 🧠</strong></p>
+        <p>I can help you search through your browsing history using AI. To get started, would you like me to process your existing browser history?</p>
+        <div class="welcome-actions">
+          <button id="welcome-process-history" class="btn-primary" style="margin: 8px 4px;">
+            📚 Process My History
+          </button>
+          <button id="welcome-skip" class="btn-secondary" style="margin: 8px 4px;">
+            ⏭️ Skip for Now
+          </button>
+        </div>
+        <p><small>You can always process your history later from Settings → Browser History Processing</small></p>
+      </div>
+    `;
+    
+    chatMessages.appendChild(welcomeMessage);
+    
+    // Scroll to bottom
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+    
+    // Add event listeners for welcome actions
+    document.getElementById('welcome-process-history').addEventListener('click', () => {
+      // Open settings modal and focus on history processing
+      settingsModal.classList.remove('hidden');
+      // Scroll to the history processing section
+      const historySection = document.querySelector('#process-history-btn').closest('.settings-section');
+      if (historySection) {
+        historySection.scrollIntoView({ behavior: 'smooth' });
+      }
+      welcomeMessage.remove();
+    });
+    
+    document.getElementById('welcome-skip').addEventListener('click', () => {
+      welcomeMessage.remove();
+      appendMessage('Got it! You can process your browser history anytime from the settings menu. Try searching for something or type "/" for commands.', 'received');
+    });
+  }
 });

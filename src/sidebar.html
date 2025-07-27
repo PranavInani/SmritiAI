@@ -123,25 +123,31 @@
           </div>
 
           <div class="settings-section">
-            <h3>Browser Data Export</h3>
+            <h3>Browser History Processing</h3>
             <div class="setting-item">
-              <label for="history-time-range">Export time range:</label>
+              <label for="history-time-range">Process time range:</label>
               <select id="history-time-range">
-                <option value="week">Last Week</option>
+                <option value="week" selected>Last Week</option>
                 <option value="month">Last Month</option>
                 <option value="6months">Last 6 Months</option>
                 <option value="year">Last Year</option>
                 <option value="2years">Last 2 Years</option>
-                <option value="all" selected>All Time</option>
+                <option value="all">All Time</option>
               </select>
-              <span class="setting-help">Select the time period for history export</span>
+              <span class="setting-help">Select the time period to process existing browser history</span>
             </div>
             <div class="setting-item">
-              <button id="export-history-btn" class="btn-secondary">
-                <span id="export-history-text">Export Browser History</span>
-                <span id="export-history-spinner" class="hidden"> 📥</span>
+              <button id="process-history-btn" class="btn-secondary">
+                <span id="process-history-text">Process Browser History</span>
+                <span id="process-history-spinner" class="hidden"> �</span>
               </button>
-              <span class="setting-help">Export Firefox browsing history as JSON file</span>
+              <span class="setting-help">Generate embeddings for your existing browser history to make it searchable</span>
+            </div>
+            <div class="setting-item" id="history-progress-container" style="display: none;">
+              <div class="progress-bar">
+                <div id="history-progress-fill" class="progress-fill"></div>
+              </div>
+              <span id="history-progress-text" class="progress-text">Processing...</span>
             </div>
           </div>
         </div>

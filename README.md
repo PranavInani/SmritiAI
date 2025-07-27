@@ -11,7 +11,7 @@ SmritiAI is a Firefox browser extension that uses AI-powered semantic search to 
 - **⚡ Fast Vector Search**: Uses HNSW (Hierarchical Navigable Small World) algorithm for efficient similarity search
 - **🎨 Modern UI**: Clean, responsive sidebar interface with dark/light theme support
 - **📊 Index Management**: Tools to rebuild, export, and manage your search index
-- **📈 Browser History Export**: Export your browser history with flexible time range options
+- **📈 Browser History Processing**: Process your existing browser history to make it searchable with AI
 - **⚙️ Customizable Settings**: Adjust search parameters and indexing behavior
 - **🔒 Privacy-First**: All processing happens locally in your browser
 
@@ -101,6 +101,16 @@ npm run dev
 2. Type your search query in natural language
 3. View results with clickable links to your previously visited pages
 
+### First-Time Setup
+
+When you first install SmritiAI, you'll see a welcome message offering to process your existing browser history. This will:
+
+- Generate AI embeddings for your past browsing history
+- Make your entire browsing history searchable with semantic search
+- Allow you to choose how far back to process (last week, month, year, etc.)
+
+You can skip this step and process your history later from the settings.
+
 ### Slash Commands
 
 - `/clear` - Clear chat history
@@ -114,8 +124,8 @@ Access settings through the dropdown menu or `/settings` command:
 - **Search Results**: Configure number of results returned
 - **HNSW Parameters**: Adjust search quality and performance
 - **Index Management**: Rebuild search index
+- **Browser History Processing**: Process existing browser history to make it searchable
 - **Data Export/Import**: Backup and restore your data
-- **Browser History Export**: Export browser history with time filters
 
 ## 🔧 Configuration
 

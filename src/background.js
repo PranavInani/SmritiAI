@@ -215,11 +215,11 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
         return true;
     }
 
-    // Export browser history handler
-    if (message.action === 'export-browser-history') {
+    // Process browser history handler
+    if (message.action === 'process-browser-history') {
         (async () => {
             try {
-                console.log('Exporting browser history...');
+                console.log('Processing browser history for AI indexing...');
                 
                 // Calculate start time based on the selected range
                 const now = Date.now();
@@ -239,7 +239,7 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     }
                 }
                 
-                console.log(`Exporting history from: ${message.timeRange || 'all time'}`);
+                console.log(`Processing history from: ${message.timeRange || 'all time'}`);
                 
                 // Query browser history using the history API
                 const historyItems = await browser.history.search({
@@ -248,27 +248,128 @@ browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
                     startTime: startTime // From calculated start time
                 });
 
-                // Format the history data
-                const formattedHistory = historyItems.map(item => ({
-                    url: item.url,
-                    title: item.title || 'Untitled',
-                    visitCount: item.visitCount || 0,
-                    lastVisitTime: item.lastVisitTime ? new Date(item.lastVisitTime).toISOString() : null,
-                    typedCount: item.typedCount || 0
-                }));
-
-                console.log(`Exported ${formattedHistory.length} history items from ${message.timeRange || 'all time'}`);
-                sendResponse({ 
-                    success: true, 
-                    history: formattedHistory,
-                    count: formattedHistory.length,
-                    timeRange: message.timeRange || 'all'
-                });
+                console.log(`Found ${historyItems.length} history items to process`);
+                
+                // Start processing in batches
+                await processHistoryItemsBatch(historyItems, sendResponse);
+                
             } catch (error) {
-                console.error('Failed to export browser history:', error);
+                console.error('Failed to process browser history:', error);
+                browser.runtime.sendMessage({
+                    type: 'history-processing-error',
+                    error: error.message
+                });
                 sendResponse({ success: false, error: error.message });
             }
         })();
         return true;
     }
 });
+
+// Process browser history items in batches with progress updates
+async function processHistoryItemsBatch(historyItems, sendResponse) {
+    const BATCH_SIZE = 10; // Process 10 items at a time
+    let processedCount = 0;
+    let successfullyProcessed = 0;
+    const totalItems = historyItems.length;
+
+    // Send initial response to confirm we're starting
+    sendResponse({ success: true, totalItems });
+
+    try {
+        // Load the embedding model
+        const extractor = await EmbeddingPipelineSingleton.getInstance();
+        
+        for (let i = 0; i < historyItems.length; i += BATCH_SIZE) {
+            const batch = historyItems.slice(i, i + BATCH_SIZE);
+            
+            // Process each item in the batch
+            for (const item of batch) {
+                try {
+                    // Skip items without proper title or URL
+                    if (!item.url || !item.title || item.title.trim() === '') {
+                        processedCount++;
+                        continue;
+                    }
+                    
+                    // Skip non-http/https URLs (file://, chrome://, etc.)
+                    if (!item.url.startsWith('http://') && !item.url.startsWith('https://')) {
+                        processedCount++;
+                        continue;
+                    }
+                    
+                    // Check if this URL is already indexed
+                    const { db } = await import('./db.js');
+                    const existingPage = await db.pages.where('url').equals(item.url).first();
+                    
+                    if (existingPage) {
+                        processedCount++;
+                        continue; // Skip already indexed pages
+                    }
+                    
+                    // Combine title and URL for embedding
+                    const textForEmbedding = `${item.title} - ${item.url}`;
+                    
+                    // Generate embedding
+                    const embedding = await extractor(textForEmbedding, { pooling: 'mean', normalize: true });
+                    
+                    // Save to database using the existing database function
+                    const { addOrUpdatePage } = await import('./db.js');
+                    const savedPage = await addOrUpdatePage({
+                        url: item.url,
+                        title: item.title,
+                        embedding: embedding.data
+                    });
+                    
+                    if (savedPage) {
+                        // Add to search index
+                        await addPageToSearchIndex(savedPage);
+                        successfullyProcessed++;
+                    }
+                    
+                } catch (error) {
+                    console.error(`Failed to process history item: ${item.url}`, error);
+                }
+                
+                processedCount++;
+                
+                // Send progress update
+                browser.runtime.sendMessage({
+                    type: 'history-processing-progress',
+                    processed: processedCount,
+                    total: totalItems
+                });
+            }
+            
+            // Small delay between batches to avoid overwhelming the system
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+        
+        // Send completion message
+        browser.runtime.sendMessage({
+            type: 'history-processing-complete',
+            processedCount: successfullyProcessed,
+            totalCount: totalItems
+        });
+        
+        console.log(`History processing complete: ${successfullyProcessed}/${totalItems} pages indexed`);
+        
+    } catch (error) {
+        console.error('Error during batch processing:', error);
+        browser.runtime.sendMessage({
+            type: 'history-processing-error',
+            error: error.message
+        });
+    }
+}
+
+// Helper function to add a page to the search index
+async function addPageToSearchIndex(pageData) {
+    try {
+        const { addPageToIndex } = await import('./search.js');
+        await addPageToIndex(pageData);
+    } catch (error) {
+        console.error('Failed to add page to search index:', error);
+        throw error;
+    }
+}
