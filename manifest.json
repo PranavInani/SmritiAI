@@ -19,7 +19,7 @@
     "open_at_install": true
   },
   "background": {
-    "scripts": ["background.js"],
+    "scripts": ["background/background.js"],
     "persistent": true
   },
   "content_scripts": [

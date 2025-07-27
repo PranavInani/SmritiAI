@@ -22,24 +22,45 @@ export async function addOrUpdatePage(pageData) {
     const { url, title, embedding } = pageData;
     const timestamp = new Date().toISOString();
 
-    // Save to the database without the textContent field
-    const id = await db.pages.put({
-      url,
-      title,
-      embedding,
-      timestamp,
-    });
-
-    console.log(`Successfully saved embedding for: ${title}`);
+    // First, try to find existing page
+    const existingPage = await db.pages.where('url').equals(url).first();
     
-    // Return the page data with the ID
-    return {
-      id,
-      url,
-      title,
-      embedding,
-      timestamp,
-    };
+    if (existingPage) {
+      // Update existing page
+      await db.pages.update(existingPage.id, {
+        title,
+        embedding,
+        timestamp,
+      });
+      
+      console.log(`Successfully updated embedding for: ${title}`);
+      
+      return {
+        id: existingPage.id,
+        url,
+        title,
+        embedding,
+        timestamp,
+      };
+    } else {
+      // Add new page
+      const id = await db.pages.add({
+        url,
+        title,
+        embedding,
+        timestamp,
+      });
+
+      console.log(`Successfully saved new embedding for: ${title}`);
+      
+      return {
+        id,
+        url,
+        title,
+        embedding,
+        timestamp,
+      };
+    }
   } catch (error) {
     console.error(`Failed to save page ${pageData.url}:`, error);
     return null;
