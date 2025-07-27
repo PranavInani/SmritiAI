@@ -103,3 +103,42 @@ export function autoResizeTextarea(textarea) {
   textarea.style.height = 'auto';
   textarea.style.height = `${textarea.scrollHeight}px`;
 }
+
+/**
+ * Create a DOM element with optional properties
+ * @param {string} tag - The HTML tag name
+ * @param {Object} options - Element options
+ * @param {string} options.className - CSS class name
+ * @param {string} options.textContent - Text content
+ * @param {string} options.innerHTML - HTML content
+ * @param {Object} options.attributes - HTML attributes
+ * @param {Function} options.onclick - Click handler
+ * @returns {HTMLElement} The created element
+ */
+export function createElement(tag, options = {}) {
+  const element = document.createElement(tag);
+  
+  if (options.className) {
+    element.className = options.className;
+  }
+  
+  if (options.textContent) {
+    element.textContent = options.textContent;
+  }
+  
+  if (options.innerHTML) {
+    element.innerHTML = options.innerHTML;
+  }
+  
+  if (options.attributes) {
+    Object.entries(options.attributes).forEach(([key, value]) => {
+      element.setAttribute(key, value);
+    });
+  }
+  
+  if (options.onclick) {
+    element.onclick = options.onclick;
+  }
+  
+  return element;
+}

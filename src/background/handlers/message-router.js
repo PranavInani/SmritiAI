@@ -1,6 +1,6 @@
 import { createAsyncHandler } from '../utils/message-helpers.js';
 import { handleProcessPageData } from './page-processor.js';
-import { handleSearch, handleGetEmbedding, handleRebuildIndex, handleGetIndexStats } from './search-handler.js';
+import { handleSearch, handleGetEmbedding, handleRebuildIndex, handleGetIndexStats, handleGetAvailableDomains } from './search-handler.js';
 import { handleUpdateSettings } from './settings-handler.js';
 import { handleExportData, handleImportData, handleClearAllData } from './data-handler.js';
 import { handleProcessBrowserHistory } from './history-processor.js';
@@ -26,6 +26,7 @@ export class MessageRouter {
         this.handlers.set('get-embedding', handleGetEmbedding);  // Note: message.type for this one
         this.handlers.set('rebuild-index', handleRebuildIndex);
         this.handlers.set('get-index-stats', handleGetIndexStats);
+        this.handlers.set('get-available-domains', handleGetAvailableDomains);
         
         // Settings
         this.handlers.set('update-settings', handleUpdateSettings);

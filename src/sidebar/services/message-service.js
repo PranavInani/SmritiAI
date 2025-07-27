@@ -5,13 +5,20 @@
 /**
  * Send a search query to the background script
  * @param {string} query - Search query
+ * @param {string} domainFilter - Optional domain filter string
  * @returns {Promise<Array>} Search results
  */
-export async function sendSearchQuery(query) {
-  return await browser.runtime.sendMessage({
+export async function sendSearchQuery(query, domainFilter = null) {
+  const message = {
     action: 'search',
     query: query
-  });
+  };
+  
+  if (domainFilter) {
+    message.domainFilter = domainFilter;
+  }
+  
+  return await browser.runtime.sendMessage(message);
 }
 
 /**
@@ -87,5 +94,15 @@ export async function importData(data) {
 export async function clearAllData() {
   return await browser.runtime.sendMessage({
     action: 'clear-all-data'
+  });
+}
+
+/**
+ * Get available domains from indexed pages
+ * @returns {Promise<Object>} Available domains response
+ */
+export async function getAvailableDomains() {
+  return await browser.runtime.sendMessage({
+    action: 'get-available-domains'
   });
 }

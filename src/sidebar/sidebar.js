@@ -4,6 +4,7 @@ import { CommandSystem } from './components/command-system.js';
 import { SettingsModal } from './components/settings-modal.js';
 import { ConfirmationModal } from './components/confirmation-modal.js';
 import { HeaderDropdown } from './components/header-dropdown.js';
+import { DomainFilter } from './components/domain-filter.js';
 import { StatsHandler } from './handlers/stats-handler.js';
 import { DataHandler } from './handlers/data-handler.js';
 import { FirstTimeHandler } from './handlers/first-time-handler.js';
@@ -21,9 +22,9 @@ class SidebarApp {
   /**
    * Initialize the sidebar application
    */
-  init() {
+  async init() {
     // Initialize core components
-    this.initializeComponents();
+    await this.initializeComponents();
     
     // Set up component dependencies
     this.setupDependencies();
@@ -35,11 +36,15 @@ class SidebarApp {
   /**
    * Initialize all components
    */
-  initializeComponents() {
+  async initializeComponents() {
     // Core UI components
     this.components.theme = new ThemeManager();
     this.components.chat = new ChatInterface();
     this.components.confirmationModal = new ConfirmationModal();
+    
+    // Initialize domain filter and wait for it to complete
+    this.components.domainFilter = new DomainFilter();
+    await this.components.domainFilter.init();
     
     // Handlers
     this.handlers.stats = new StatsHandler(this.components.chat);
@@ -74,13 +79,48 @@ class SidebarApp {
    * Set up component dependencies and cross-references
    */
   setupDependencies() {
-    // Any additional cross-component setup can go here
-    // Most dependencies are already handled in constructors
+    // Set domain filter reference in chat interface and command system
+    this.components.chat.setDomainFilter(this.components.domainFilter);
+    this.components.commandSystem.setDomainFilter(this.components.domainFilter);
+    
+    // Mount domain filter in the UI
+    this.mountDomainFilter();
+    
+    // Set up domain filter event listeners
+    this.setupDomainFilterEvents();
+  }
+
+  /**
+   * Mount the domain filter component in the UI
+   */
+  mountDomainFilter() {
+    const chatContainer = document.getElementById('chat-container');
+    const chatMessages = document.getElementById('chat-messages');
+    
+    // Insert domain filter between header and messages
+    const domainFilterElement = this.components.domainFilter.getElement();
+    chatContainer.insertBefore(domainFilterElement, chatMessages);
+  }
+
+  /**
+   * Set up domain filter event listeners
+   */
+  setupDomainFilterEvents() {
+    const domainFilterElement = this.components.domainFilter.getElement();
+    
+    // Listen for domain filter events
+    domainFilterElement.addEventListener('domainFilterApplied', (event) => {
+      console.log('Domain filter applied:', event.detail.filter);
+    });
+    
+    domainFilterElement.addEventListener('domainFilterCleared', () => {
+      console.log('Domain filter cleared');
+    });
   }
 }
 
 // Initialize the application when DOM is loaded
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   const app = new SidebarApp();
-  app.init();
+  await app.init();
 });

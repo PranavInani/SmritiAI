@@ -9,6 +9,7 @@ export class ChatInterface {
     this.chatForm = document.getElementById('chat-form');
     this.messageInput = document.getElementById('message-input');
     this.chatMessages = document.getElementById('chat-messages');
+    this.domainFilter = null; // Reference to domain filter component
     this.init();
   }
 
@@ -25,6 +26,14 @@ export class ChatInterface {
     this.messageInput.addEventListener('input', () => {
       this.autoResizeInput();
     });
+  }
+
+  /**
+   * Set the domain filter component reference
+   * @param {DomainFilter} domainFilter - Domain filter component
+   */
+  setDomainFilter(domainFilter) {
+    this.domainFilter = domainFilter;
   }
 
   /**
@@ -57,9 +66,12 @@ export class ChatInterface {
     const thinkingMessage = this.addMessage('Thinking...', 'received');
 
     try {
-      const results = await sendSearchQuery(query);
+      // Get domain filter if available
+      const domainFilter = this.domainFilter ? this.domainFilter.getCurrentFilter() : null;
+      
+      const results = await sendSearchQuery(query, domainFilter);
       thinkingMessage.remove();
-      this.displayResults(results);
+      this.displayResults(results, domainFilter);
     } catch (error) {
       console.error('Error performing search:', error);
       thinkingMessage.textContent = 'Search failed. See console for details.';
@@ -79,15 +91,30 @@ export class ChatInterface {
   /**
    * Display search results
    * @param {Array} results - Search results
+   * @param {string} domainFilter - Applied domain filter (for display)
    */
-  displayResults(results) {
+  displayResults(results, domainFilter = null) {
     if (!results || results.length === 0) {
-      this.addMessage('No results found.', 'received');
+      let message = 'No results found.';
+      if (domainFilter) {
+        message += ` (with domain filter: ${domainFilter})`;
+      }
+      this.addMessage(message, 'received');
       return;
     }
 
     const resultsMessageElement = document.createElement('div');
     resultsMessageElement.classList.add('message', 'received');
+
+    // Add filter info if applied
+    if (domainFilter) {
+      const filterInfo = document.createElement('div');
+      filterInfo.style.fontSize = '0.85em';
+      filterInfo.style.opacity = '0.7';
+      filterInfo.style.marginBottom = '8px';
+      filterInfo.textContent = `Filtered by: ${domainFilter}`;
+      resultsMessageElement.appendChild(filterInfo);
+    }
 
     const ul = document.createElement('ul');
     results.forEach(page => {

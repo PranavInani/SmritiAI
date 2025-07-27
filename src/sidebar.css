@@ -251,6 +251,137 @@ body.dark-mode .message li:hover {
     text-decoration: underline;
 }
 
+/* Domain Filter Styles */
+.domain-filter-container {
+  margin: 8px 10px;
+  border-top: 1px solid var(--header-border-color);
+  padding-top: 8px;
+}
+
+.domain-filter-toggle {
+  margin-bottom: 8px;
+}
+
+.domain-filter-button {
+  background: transparent;
+  border: 1px solid var(--input-border-color);
+  color: var(--text-color);
+  padding: 6px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.domain-filter-button:hover {
+  background-color: var(--msg-received-bg);
+}
+
+.domain-filter-button.active {
+  background-color: var(--button-bg);
+  color: var(--button-text);
+  border-color: var(--button-bg);
+}
+
+.domain-filter-input-container {
+  background-color: var(--form-bg);
+  border: 1px solid var(--input-border-color);
+  border-radius: 8px;
+  padding: 12px;
+  position: relative;
+}
+
+#domain-filter-input {
+  width: 100%;
+  border: 1px solid var(--input-border-color);
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  border-radius: 6px;
+  padding: 8px 10px;
+  box-sizing: border-box;
+  font-size: 0.9em;
+  margin-bottom: 8px;
+}
+
+#domain-filter-input:focus {
+  outline: none;
+  border-color: var(--button-bg);
+}
+
+.domain-filter-help {
+  font-size: 0.8em;
+  color: var(--text-color);
+  opacity: 0.7;
+  margin-bottom: 8px;
+  line-height: 1.3;
+}
+
+.domain-suggestions {
+  position: absolute;
+  top: 100%;
+  left: 12px;
+  right: 12px;
+  background-color: var(--bg-color);
+  border: 1px solid var(--input-border-color);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  max-height: 150px;
+  overflow-y: auto;
+  margin-top: 2px;
+}
+
+.domain-suggestion {
+  padding: 8px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--header-border-color);
+  font-size: 0.9em;
+  transition: background-color 0.2s ease;
+}
+
+.domain-suggestion:last-child {
+  border-bottom: none;
+}
+
+.domain-suggestion:hover {
+  background-color: var(--msg-received-bg);
+}
+
+.domain-filter-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.btn-small {
+  padding: 4px 12px;
+  font-size: 0.85em;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background-color: var(--button-bg);
+  color: var(--button-text);
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+.btn-secondary {
+  background-color: transparent;
+  color: var(--text-color);
+  border: 1px solid var(--input-border-color);
+}
+
+.btn-secondary:hover {
+  background-color: var(--msg-received-bg);
+}
+
 .message a:visited {
     color: var(--button-bg) !important;
 }
