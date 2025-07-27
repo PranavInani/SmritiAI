@@ -90,17 +90,7 @@ export function applyDomainFilter(pages, domainFilterString) {
   }
 
   const domainFilter = parseDomainFilter(domainFilterString);
-  console.log('Domain filter parsed:', domainFilter);
-  
-  const filteredPages = pages.filter(page => {
-    const matches = matchesDomainFilter(page, domainFilter);
-    const pageDomain = extractDomain(page.url);
-    console.log(`Page: ${page.title} (${pageDomain}) - Matches: ${matches}`);
-    return matches;
-  });
-  
-  console.log(`Applied domain filter "${domainFilterString}": ${pages.length} -> ${filteredPages.length} results`);
-  return filteredPages;
+  return pages.filter(page => matchesDomainFilter(page, domainFilter));
 }
 
 /**

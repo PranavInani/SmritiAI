@@ -14,8 +14,6 @@ export async function handleSearch(message, sender, sendResponse) {
     console.log(`Searching for: "${message.query}"`);
     if (message.domainFilter) {
         console.log(`Domain filter applied: "${message.domainFilter}"`);
-    } else {
-        console.log('No domain filter applied');
     }
     
     const extractor = await EmbeddingPipelineSingleton.getInstance();
