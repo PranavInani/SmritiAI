@@ -53,17 +53,22 @@ export async function initSearchIndex() {
  */
 async function rebuildIndex() {
   try {
-    const pages = await db.pages.toArray();
-    console.log(`Rebuilding HNSW index with ${pages.length} existing pages...`);
+    const pageCount = await db.pages.count();
+    console.log(`Rebuilding HNSW index with ${pageCount} existing pages...`);
     
-    for (const page of pages) {
+    let processedCount = 0;
+    await db.pages.each(page => {
       if (page.embedding && page.embedding.length === HNSW_CONFIG.dimension) {
         const embedding = new Float32Array(page.embedding);
         hnswIndex.addPoint(embedding, page.id, false);
       }
-    }
+      processedCount++;
+      if (processedCount > 0 && processedCount % 1000 === 0) {
+        console.log(`...indexed ${processedCount} of ${pageCount} pages...`);
+      }
+    });
     
-    console.log('HNSW index rebuilt successfully.');
+    console.log(`HNSW index rebuilt successfully with ${hnswIndex.getCurrentCount()} items.`);
   } catch (error) {
     console.error('Failed to rebuild HNSW index:', error);
   }
