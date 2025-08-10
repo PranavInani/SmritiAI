@@ -5,6 +5,8 @@ import { loadHnswlib } from 'hnswlib-wasm/dist/hnswlib.js';
 let hnswIndex = null;
 let hnswLib = null;
 let isIndexInitialized = false;
+// Queue pages for indexing if they arrive before the index is initialized
+const pendingIndexQueue = [];
 
 // Configuration for HNSW
 let HNSW_CONFIG = {
@@ -41,6 +43,18 @@ export async function initSearchIndex() {
     
     isIndexInitialized = true;
     console.log('HNSW search index initialized successfully.');
+
+    // Flush any pages that arrived before initialization completed
+    if (pendingIndexQueue.length > 0) {
+      console.log(`Flushing ${pendingIndexQueue.length} queued pages into HNSW index...`);
+      for (const page of pendingIndexQueue.splice(0, pendingIndexQueue.length)) {
+        try {
+          await addPageToIndex(page);
+        } catch (e) {
+          console.warn('Failed to index queued page:', page?.url, e);
+        }
+      }
+    }
   } catch (error) {
     console.error('Failed to initialize HNSW index:', error);
     throw error;
@@ -181,8 +195,10 @@ function cosineSimilarity(vecA, vecB) {
  */
 export async function addPageToIndex(pageData) {
   if (!isIndexInitialized || !hnswIndex) {
-    console.warn('HNSW index not initialized. Page will be indexed on next restart.');
-    return;
+  // Queue for later instead of dropping
+  pendingIndexQueue.push(pageData);
+  console.warn('HNSW index not initialized yet. Queued page for indexing later.');
+  return true;
   }
 
   try {
@@ -191,10 +207,22 @@ export async function addPageToIndex(pageData) {
       return;
     }
 
-    const embedding = new Float32Array(pageData.embedding);
-    hnswIndex.addPoint(embedding, pageData.id, false);
-    
-    console.log(`Page "${pageData.title}" added to HNSW index.`);
+    const embedding = pageData.embedding instanceof Float32Array
+      ? pageData.embedding
+      : new Float32Array(pageData.embedding);
+
+    try {
+      hnswIndex.addPoint(embedding, pageData.id, false);
+      console.log(`Page "${pageData.title}" added to HNSW index.`);
+    } catch (err) {
+      // If the label already exists in the index, ignore gracefully
+      const msg = String(err?.message || err);
+      if (/already|exists/i.test(msg)) {
+        console.debug(`HNSW: label ${pageData.id} already indexed; skipping.`);
+      } else {
+        throw err;
+      }
+    }
   } catch (error) {
     console.error('Failed to add page to HNSW index:', error);
   }
@@ -376,10 +404,18 @@ export async function getIndexStats() {
         total: embeddingMemory + metadataMemory
       };
       
-      // Get oldest and newest entries
-      const timestamps = pages.map(page => new Date(page.timestamp)).sort();
-      stats.oldestEntry = timestamps[0]?.toISOString();
-      stats.newestEntry = timestamps[timestamps.length - 1]?.toISOString();
+      // Get oldest and newest entries using numeric comparison to avoid lexicographic sort issues
+      let minTs = Number.POSITIVE_INFINITY;
+      let maxTs = Number.NEGATIVE_INFINITY;
+      for (const p of pages) {
+        const t = new Date(p.timestamp).getTime();
+        if (!Number.isNaN(t)) {
+          if (t < minTs) minTs = t;
+          if (t > maxTs) maxTs = t;
+        }
+      }
+      stats.oldestEntry = Number.isFinite(minTs) ? new Date(minTs).toISOString() : null;
+      stats.newestEntry = Number.isFinite(maxTs) ? new Date(maxTs).toISOString() : null;
     } else {
       stats.validEmbeddings = 0;
       stats.invalidEmbeddings = 0;
