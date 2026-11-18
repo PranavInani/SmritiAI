@@ -56,3 +56,4 @@ export class ThemeManager {
     return this.body.classList.contains('dark-mode') ? 'dark' : 'light';
   }
 }
+

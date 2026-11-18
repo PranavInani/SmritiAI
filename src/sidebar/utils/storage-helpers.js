@@ -63,3 +63,4 @@ export function isFirstTimeUser() {
 export function markNotFirstTime() {
   localStorage.setItem('smriti-ai-first-time', 'false');
 }
+

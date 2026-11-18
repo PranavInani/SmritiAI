@@ -167,3 +167,4 @@ async function addPageToSearchIndex(pageData) {
         throw error;
     }
 }
+

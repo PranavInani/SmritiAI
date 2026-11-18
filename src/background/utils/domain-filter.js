@@ -110,3 +110,4 @@ export function getUniqueDomains(pages) {
   
   return Array.from(domains).sort();
 }
+

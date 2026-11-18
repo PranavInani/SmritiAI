@@ -154,3 +154,4 @@ export class DataHandler {
     setTimeout(() => clearStatus.textContent = '', 3000);
   }
 }
+

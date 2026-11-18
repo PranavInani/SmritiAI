@@ -82,3 +82,4 @@ export class MessageRouter {
         return asyncHandler(message, sender, sendResponse);
     }
 }
+

@@ -22,3 +22,4 @@ export class EmbeddingPipelineSingleton {
         return this.instance;
     }
 }
+

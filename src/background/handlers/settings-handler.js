@@ -20,3 +20,4 @@ export async function handleUpdateSettings(message, sender, sendResponse) {
         sendResponse(createErrorResponse(error));
     }
 }
+

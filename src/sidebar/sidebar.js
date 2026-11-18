@@ -124,3 +124,4 @@ document.addEventListener('DOMContentLoaded', async () => {
   const app = new SidebarApp();
   await app.init();
 });
+

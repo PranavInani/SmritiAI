@@ -39,3 +39,4 @@ export async function handleProcessPageData(message, sender, sendResponse) {
         throw error;
     }
 }
+

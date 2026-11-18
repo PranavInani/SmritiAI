@@ -60,3 +60,4 @@ export async function handleClearAllData(message, sender, sendResponse) {
         sendResponse(createErrorResponse(error));
     }
 }
+

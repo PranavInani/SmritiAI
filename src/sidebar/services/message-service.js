@@ -106,3 +106,4 @@ export async function getAvailableDomains() {
     action: 'get-available-domains'
   });
 }
+

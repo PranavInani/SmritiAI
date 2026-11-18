@@ -58,3 +58,4 @@ export class ConfirmationModal {
     this.confirmationModal.classList.add('hidden');
   }
 }
+

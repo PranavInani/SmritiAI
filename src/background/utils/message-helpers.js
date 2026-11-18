@@ -36,3 +36,4 @@ export function createErrorResponse(error) {
     const message = error instanceof Error ? error.message : error;
     return { success: false, error: message };
 }
+

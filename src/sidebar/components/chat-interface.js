@@ -184,3 +184,4 @@ export class ChatInterface {
     return welcomeMessage;
   }
 }
+

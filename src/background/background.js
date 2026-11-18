@@ -15,3 +15,4 @@ const messageRouter = new MessageRouter();
 browser.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return messageRouter.route(message, sender, sendResponse);
 });
+

@@ -131,3 +131,4 @@ export async function handleGetIndexStats(message, sender, sendResponse) {
         sendResponse(createErrorResponse(error));
     }
 }
+

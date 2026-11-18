@@ -330,3 +330,4 @@ This project is licensed under the MIT License.
 ---
 
 **Note**: This extension requires Firefox and uses Manifest V2. Future versions may include Chrome support with Manifest V3.
+

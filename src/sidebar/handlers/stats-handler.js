@@ -62,3 +62,4 @@ export class StatsHandler {
     this.chatInterface.chatMessages.scrollTop = this.chatInterface.chatMessages.scrollHeight;
   }
 }
+
